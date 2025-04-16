@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # <-- add this
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -9,6 +10,7 @@ from models.user import User, db
 from utils.auth import token_required, generate_token, refresh_token
 
 app = Flask(__name__)
+CORS(app)  # <-- enable CORS for all routes
 
 # Configuration
 app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
@@ -159,4 +161,4 @@ def protected(current_user):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True) 
+    app.run(debug=True, port=5050) 
