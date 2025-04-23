@@ -2,22 +2,23 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
-
-# Import the User model and db instance
 from models.user import User, db
-# Import auth utilities
 from utils.auth import token_required, generate_token, refresh_token
+from config import *
+from utils.data_extraction import DataExtractor
+from utils.ai_services import AIServices
 
 app = Flask(__name__)
 
-# Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'png', 'jpg', 'jpeg'}
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 30  # Token expires in 30 minutes
+# Load configuration
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['DEBUG'] = DEBUG
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = int(MAX_CONTENT_LENGTH)
+app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
 
 # Initialize database with app
 db.init_app(app)
@@ -25,13 +26,23 @@ db.init_app(app)
 # Create uploads folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+# Initialize data extractor and AI services
+data_extractor = DataExtractor()
+ai_services = AIServices()
 
-# Routes
+# Create all database tables
+with app.app_context():
+    db.create_all()
+    print("Database tables created successfully")
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'].split(',')
+
 @app.route('/api/register', methods=['POST'])
 def register():
+    print("Registering user")
     try:
+        
         data = request.get_json()
 
         # Check if required fields are present
@@ -55,12 +66,8 @@ def register():
         db.session.add(new_user)
         db.session.commit()
 
-        # Generate token for new user
-        token = generate_token(new_user.id, app.config['JWT_ACCESS_TOKEN_EXPIRES'])
-
         return jsonify({
             'message': 'User registered successfully',
-            'token': token,
             'user': new_user.to_dict()
         }), 200
 
@@ -75,18 +82,24 @@ def login():
         if not all(k in data for k in ['username', 'password']):
             return jsonify({'message': 'Missing username or password'}), 400
 
-        user = User.query.filter_by(username=data['username']).first()
+        # Try to find user by username or email
+        user = User.query.filter(
+            (User.username == data['username']) | 
+            (User.email == data['username'])
+        ).first()
 
         if not user or not user.check_password(data['password']):
-            return jsonify({'message': 'Invalid username or password'}), 400
+            return jsonify({'message': 'Invalid username/email or password'}), 400
 
         # Generate token with expiration
-        token = generate_token(user.id, app.config['JWT_ACCESS_TOKEN_EXPIRES'])
+        token = generate_token(user.id, int(app.config['JWT_ACCESS_TOKEN_EXPIRES']))
+
+        if not token:
+            return jsonify({'message': 'Failed to generate token'}), 500
 
         return jsonify({
             'message': 'Login successful',
             'token': token,
-            'token_expires_in_minutes': app.config['JWT_ACCESS_TOKEN_EXPIRES'],
             'user': user.to_dict()
         }), 200
 
@@ -130,20 +143,45 @@ def upload_file(current_user):
         if file.filename == '':
             return jsonify({'message': 'No file selected'}), 400
 
-        # Check if file type is allowed
-        if not allowed_file(file.filename):
-            return jsonify({'message': 'File type not allowed'}), 400
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
 
-        # Secure the filename and save the file
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
+            try:
+                # Extract text from file
+                result = data_extractor.extract_text_from_file(file_path)
+                
+                
+                if 'error' in result:
+                    return jsonify({
+                        'message': 'Error processing file',
+                        'error': result['error']
+                    }), 500
+                
+                print(result)
+                
+                # Save the extracted data to database
+                bill = User.save_extracted_data(db, current_user.id, result['analysis'])
+                
+                return jsonify({
+                    'message': 'File uploaded and processed successfully',
+                    'filename': filename,
+                    'data': bill.to_dict()
+                }), 200
 
-        return jsonify({
-            'message': 'File uploaded successfully',
-            'filename': filename,
-            'path': file_path
-        }), 200
+            except Exception as e:
+                return jsonify({
+                    'message': 'Error processing file',
+                    'error': str(e)
+                }), 500
+
+            finally:
+                # Clean up the file
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+        return jsonify({'message': 'File type not allowed'}), 400
 
     except Exception as e:
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
@@ -157,6 +195,4 @@ def protected(current_user):
     }), 200
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True) 
