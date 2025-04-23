@@ -1,35 +1,32 @@
-from langchain_openai import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains.summarize import load_summarize_chain
-from langchain.docstore.document import Document
-from perplexity import Client
-import os
+from langchain.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 import json
+from config import OPENAI_API_KEY
 
 load_dotenv()
+
+class FinancialData(BaseModel):
+    merchant_name: str = Field(description="Name of the merchant or business")
+    total_amount: float = Field(description="Total amount of the transaction")
+    date: str = Field(description="Date of the transaction in YYYY-MM-DD format")
+    items: List[Dict[str, Any]] = Field(description="List of items purchased")
 
 class AIServices:
     def __init__(self):
         # Initialize OpenAI client
-        self.openai_llm = ChatOpenAI(
-            model="gpt-3.5-turbo",
-            temperature=0.7,
-            api_key=os.getenv('OPENAI_API_KEY')
+        self.openai_client = ChatOpenAI(
+            api_key=OPENAI_API_KEY,
+            model="gpt-4o-mini"
         )
         
-        # Initialize Perplexity client
-        self.perplexity_client = Client(api_key=os.getenv('PERPLEXITY_API_KEY'))
+        # Initialize output parser
+        self.parser = PydanticOutputParser(pydantic_object=FinancialData)
         
-        # Initialize text splitter
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
-
         # Define function schemas for structured responses
         self.function_schemas = {
             "extract_financial_data": {
@@ -76,214 +73,54 @@ class AIServices:
             }
         }
 
-    def openai_chat(self, prompt: str, system_message: Optional[str] = None) -> str:
+    def openai_function_call(self, text, function_name):
         """
-        Simple chat completion using OpenAI
-        """
-        messages = []
-        if system_message:
-            messages.append({"role": "system", "content": system_message})
-        messages.append({"role": "user", "content": prompt})
-        
-        response = self.openai_llm.invoke(messages)
-        return response.content
-
-    def openai_summarize_text(self, text: str) -> str:
-        """
-        Summarize text using OpenAI
-        """
-        # Split text into chunks
-        texts = self.text_splitter.split_text(text)
-        docs = [Document(page_content=t) for t in texts]
-        
-        # Create summarization chain
-        chain = load_summarize_chain(
-            self.openai_llm,
-            chain_type="map_reduce",
-            verbose=True
-        )
-        
-        return chain.run(docs)
-
-    def openai_extract_entities(self, text: str) -> Dict[str, Any]:
-        """
-        Extract named entities from text using OpenAI
-        """
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a helpful assistant that extracts named entities from text. Return the data in JSON format."),
-            ("user", "Extract named entities from the following text: {text}")
-        ])
-        
-        chain = LLMChain(llm=self.openai_llm, prompt=prompt)
-        response = chain.run(text=text)
-        
-        try:
-            return eval(response)  # Convert string to dict
-        except:
-            return {"error": "Failed to parse response"}
-
-    def perplexity_chat(self, prompt: str, system_message: Optional[str] = None) -> str:
-        """
-        Simple chat completion using Perplexity
-        """
-        messages = []
-        if system_message:
-            messages.append({"role": "system", "content": system_message})
-        messages.append({"role": "user", "content": prompt})
-        
-        response = self.perplexity_client.chat(messages=messages)
-        return response.choices[0].message.content
-
-    def perplexity_analyze_document(self, text: str) -> Dict[str, Any]:
-        """
-        Analyze document content using Perplexity
-        """
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a helpful assistant that analyzes documents. Extract key information and provide insights."
-            },
-            {
-                "role": "user",
-                "content": f"Analyze the following document and provide key insights: {text}"
-            }
-        ]
-        
-        response = self.perplexity_client.chat(messages=messages)
-        return {
-            "analysis": response.choices[0].message.content,
-            "model": response.model
-        }
-
-    def perplexity_extract_financial_data(self, text: str) -> Dict[str, Any]:
-        """
-        Extract financial data from text using Perplexity
-        """
-        messages = [
-            {
-                "role": "system",
-                "content": "You are a financial data extraction assistant. Extract financial information from the text and return it in JSON format."
-            },
-            {
-                "role": "user",
-                "content": f"Extract financial data from the following text: {text}"
-            }
-        ]
-        
-        response = self.perplexity_client.chat(messages=messages)
-        try:
-            return eval(response.choices[0].message.content)
-        except:
-            return {"error": "Failed to parse financial data"}
-
-    def compare_models(self, prompt: str) -> Dict[str, Any]:
-        """
-        Compare responses from both OpenAI and Perplexity
-        """
-        openai_response = self.openai_chat(prompt)
-        perplexity_response = self.perplexity_chat(prompt)
-        
-        return {
-            "openai": {
-                "response": openai_response,
-                "model": "gpt-3.5-turbo"
-            },
-            "perplexity": {
-                "response": perplexity_response,
-                "model": "pplx-7b-online"
-            }
-        }
-
-    def openai_function_call(self, text: str, function_name: str) -> Dict[str, Any]:
-        """
-        Call OpenAI with function calling to get structured JSON response
+        Call OpenAI with function calling
         """
         try:
-            # Get the function schema
+            # Get the function schema for the requested function
             function_schema = self.function_schemas.get(function_name)
             if not function_schema:
                 return {"error": f"Function {function_name} not found"}
 
-            # Create the prompt
-            prompt = ChatPromptTemplate.from_messages([
-                ("system", "You are a helpful assistant that extracts structured information from text."),
-                ("user", f"Extract information from the following text using the {function_name} function: {text}")
-            ])
-
-            # Create the chain with function calling
-            chain = LLMChain(
-                llm=self.openai_llm,
-                prompt=prompt
-            )
-
-            # Run the chain with function calling
-            response = chain.run(
-                text=text,
-                functions=[function_schema],
-                function_call={"name": function_name}
-            )
-
-            # Parse the response
-            try:
-                return json.loads(response)
-            except:
-                return {"error": "Failed to parse response as JSON"}
-
-        except Exception as e:
-            return {"error": str(e)}
-
-    def perplexity_function_call(self, text: str, function_name: str) -> Dict[str, Any]:
-        """
-        Call Perplexity with function calling to get structured JSON response
-        """
-        try:
-            # Get the function schema
-            function_schema = self.function_schemas.get(function_name)
-            if not function_schema:
-                return {"error": f"Function {function_name} not found"}
-
-            # Create the messages
+            # Create messages with function calling and output format instructions
             messages = [
-                {
-                    "role": "system",
-                    "content": f"You are a helpful assistant that extracts structured information from text. Use the {function_name} function to format your response."
-                },
-                {
-                    "role": "user",
-                    "content": f"Extract information from the following text: {text}"
-                }
+                {"role": "system", "content": "You are a financial document analyzer. Your job is to extract structured financial information from user-submitted receipts or transaction text.\n\n"
+    "Use the provided function tool to return the data in the following format:\n"
+    "- merchant_name: Name of the store or merchant (e.g., Walmart, Starbucks)\n"
+    "- total_amount: The total amount of the transaction as a number\n"
+    "- date: The date of the transaction in YYYY-MM-DD format\n"
+    "- items: A list of purchased items, each with:\n"
+    "    - name: Name or description of the item (e.g., 'Basmati Rice', 'Latte')\n"
+    "    - quantity: Number of units purchased\n"
+    "    - price: Price per unit (not total price for quantity)\n\n"
+    "Ensure that you extract accurate values from the input. If something is missing or unclear, make a best guess based on typical receipts.\n\n"
+    f"{self.parser.get_format_instructions()}"},
+                {"role": "user", "content": text}
             ]
 
-            # Call Perplexity with function calling
-            response = self.perplexity_client.chat(
-                messages=messages,
+            # Call OpenAI with function calling
+            response = self.openai_client.invoke(
+                messages,
                 functions=[function_schema],
                 function_call={"name": function_name}
             )
-
-            # Parse the response
+            
+            # Parse the response using the output parser
             try:
-                return json.loads(response.choices[0].message.content)
-            except:
-                return {"error": "Failed to parse response as JSON"}
+                # Extract the function call arguments from the response
+                if hasattr(response, 'additional_kwargs') and 'function_call' in response.additional_kwargs:
+                    function_args = response.additional_kwargs['function_call']['arguments']
+                    # Parse the JSON string into a dictionary
+                    parsed_args = json.loads(function_args)
+                    # Create a FinancialData instance from the parsed arguments
+                    financial_data = FinancialData(**parsed_args)
+                    return financial_data.dict()
+                else:
+                    return {"error": "No function call found in response"}
+            except Exception as e:
+                return {"error": f"Failed to parse response: {str(e)}"}
 
         except Exception as e:
+            print(f"OpenAI function call error: {str(e)}")
             return {"error": str(e)}
-
-    def compare_function_calls(self, text: str, function_name: str) -> Dict[str, Any]:
-        """
-        Compare function calling responses from both OpenAI and Perplexity
-        """
-        openai_response = self.openai_function_call(text, function_name)
-        perplexity_response = self.perplexity_function_call(text, function_name)
-        
-        return {
-            "openai": {
-                "response": openai_response,
-                "model": "gpt-3.5-turbo"
-            },
-            "perplexity": {
-                "response": perplexity_response,
-                "model": "pplx-7b-online"
-            }
-        } 
