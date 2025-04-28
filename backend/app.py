@@ -7,6 +7,8 @@ from utils.auth import token_required, generate_token, refresh_token
 from config import *
 from utils.data_extraction import DataExtractor
 from utils.ai_services import AIServices
+from models.bill import Bill
+from models.item import Item
 
 app = Flask(__name__)
 
@@ -193,6 +195,50 @@ def protected(current_user):
         'message': 'This is a protected route',
         'user': current_user.to_dict()
     }), 200
+
+@app.route('/api/bills', methods=['GET'])
+@token_required
+def get_user_bills(current_user):
+    try:
+        # Get all bills for the current user
+        bills = Bill.get_user_bills(db, current_user.id)
+        
+        # Convert bills to dictionary format
+        bills_data = [bill.to_dict() for bill in bills]
+        
+        return jsonify({
+            'message': 'Bills retrieved successfully',
+            'bills': bills_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
+
+@app.route('/api/bills/<int:bill_id>/items', methods=['GET'])
+@token_required
+def get_bill_items(current_user, bill_id):
+    try:
+        print(bill_id)
+        # First verify that the bill belongs to the current user
+        bill = Bill.get_bill(db, bill_id)
+        if not bill:
+            return jsonify({'message': 'Bill not found'}), 404
+            
+        if bill.user_id != current_user.id:
+            return jsonify({'message': 'Unauthorized access to bill'}), 403
+            
+        print(bill.to_dict())
+        
+        # Convert items to dictionary format
+        items_data = [item.to_dict() for item in bill.items]
+        
+        return jsonify({
+            'message': 'Items retrieved successfully',
+            'items': items_data
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 
