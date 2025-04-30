@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -11,6 +12,7 @@ from models.bill import Bill
 from models.item import Item
 
 app = Flask(__name__)
+CORS(app)
 
 # Load configuration
 app.config['SECRET_KEY'] = SECRET_KEY
