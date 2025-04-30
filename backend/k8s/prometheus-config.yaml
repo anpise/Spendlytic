@@ -13,4 +13,10 @@ data:
       relabel_configs:
       - source_labels: [__meta_kubernetes_pod_label_app]
         regex: spendlytic-backend
-        action: keep 
+        action: keep
+    - job_name: 'kube-state-metrics'
+      static_configs:
+      - targets: ['kube-state-metrics.kube-system.svc.cluster.local:8080']
+    - job_name: 'node-exporter'
+      static_configs:
+      - targets: ['node-exporter.kube-system.svc.cluster.local:9100'] 

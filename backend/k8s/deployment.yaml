@@ -5,7 +5,7 @@ metadata:
   labels:
     app: spendlytic-backend
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: spendlytic-backend
@@ -15,55 +15,64 @@ spec:
         app: spendlytic-backend
     spec:
       containers:
-      - name: spendlytic-backend
-        image: adip07/spendlytic-backend:latest
-        ports:
-        - containerPort: 5000
-        resources:
-        env:
-        - name: DB_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: DB_USERNAME
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: DB_PASSWORD
-        - name: DB_HOST
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: DB_HOST
-        - name: DB_PORT
-          value: "5432"
-        - name: DB_NAME
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: DB_NAME
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: AWS_ACCESS_KEY_ID
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: AWS_SECRET_ACCESS_KEY
-        - name: AWS_REGION
-          value: "us-east-2"
-        - name: OPENAI_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: OPENAI_API_KEY
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: spendlytic-secrets
-              key: SECRET_KEY
-        - name: JWT_ACCESS_TOKEN_EXPIRES
-          value: "30" 
+        - name: spendlytic-backend
+          image: adip07/spendlytic-backend:test
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: "250m"      # Minimum CPU (0.1 of a CPU core)
+              memory: "256Mi"  # Minimum memory (128 megabytes)
+            limits:
+              cpu: "500m"      # Maximum CPU (0.5 of a CPU core)
+              memory: "512Mi"  # Maximum memory (512 megabytes)
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: DB_PASSWORD
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: DB_HOST
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: DB_NAME
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: AWS_REGION
+              value: "us-east-2"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: OPENAI_API_KEY
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: spendlytic-secrets
+                  key: SECRET_KEY
+            - name: JWT_ACCESS_TOKEN_EXPIRES
+              value: "30"
+          
+          

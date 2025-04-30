@@ -9,8 +9,14 @@ from utils.data_extraction import DataExtractor
 from utils.ai_services import AIServices
 from models.bill import Bill
 from models.item import Item
+from prometheus_flask_exporter import PrometheusMetrics
+import logging
+from functools import wraps
+
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
 
 # Load configuration
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -37,10 +43,33 @@ with app.app_context():
     db.create_all()
     print("Database tables created successfully")
 
+# Set up basic logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
+
+def log_info(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.info(f"Entered function: {func.__name__}")
+        try:
+            result = func(*args, **kwargs)
+            logger.info(f"Exited function successfully: {func.__name__}")
+            return result
+        except Exception as e:
+            logger.error(f"Exited function with error: {func.__name__} - {e}")
+            raise
+    return wrapper
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'].split(',')
 
+@app.route('/health', methods=['GET'])
+@log_info
+def health():
+    return jsonify({'status': 'ok'}), 200
+
 @app.route('/api/register', methods=['POST'])
+@log_info
 def register():
     print("Registering user")
     try:
@@ -67,16 +96,18 @@ def register():
 
         db.session.add(new_user)
         db.session.commit()
-
-        return jsonify({
+        logger.info(f"User registered with id: {new_user.id}")
+        response = {
             'message': 'User registered successfully',
             'user': new_user.to_dict()
-        }), 200
+        }
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
+@log_info
 def login():
     try:
         data = request.get_json()
@@ -99,17 +130,20 @@ def login():
         if not token:
             return jsonify({'message': 'Failed to generate token'}), 500
 
-        return jsonify({
+        logger.info(f"User logged in with id: {user.id}")
+        response = {
             'message': 'Login successful',
             'token': token,
             'user': user.to_dict()
-        }), 200
+        }
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
 @app.route('/api/refresh-token', methods=['POST'])
 @token_required
+@log_info
 def refresh(current_user):
     try:
         # Get current token from header
@@ -133,6 +167,7 @@ def refresh(current_user):
 
 @app.route('/api/upload', methods=['POST'])
 @token_required
+@log_info
 def upload_file(current_user):
     try:
         # Check if file is present in request
@@ -149,23 +184,26 @@ def upload_file(current_user):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
+            logger.info(f"Image uploaded: {filename}")
 
             try:
-                # Extract text from file
-                result = data_extractor.extract_text_from_file(file_path)
+                # # Extract text from file
+                # result = data_extractor.extract_text_from_file(file_path)
                 
                 
-                if 'error' in result:
-                    return jsonify({
-                        'message': 'Error processing file',
-                        'error': result['error']
-                    }), 500
+                # if 'error' in result:
+                #     return jsonify({
+                #         'message': 'Error processing file',
+                #         'error': result['error']
+                #     }), 500
                 
-                print(result)
+                # print(result)
+
+                result = {'extracted_text': 'AAPNA BAZAAR\n2556 E. 3Rd St.\nBloomington.Indiana-47401\nPhone : (812)-336-1833\nReceipt Date :\nAPR 06,2025 11:05 AM\nSales Date :\nAPR 06,2025 11:05 AM\nRegister No. : 1\nBatch : 60385\nPOS OrderId :\n101-20250406110504195\nLast Print\n83362 [F]SWAD CHAPPATI\n04 @\n$8.99\n$35.95\n77658 [F]BHAGWATI METHI D 10 OZ\n01 @\n$2.49\n$2.49\n71598 [F]HALDIRAMS PANEER 400 g\n01 @\n$4.49\n$4.49\nSubTotal : [QTY :6]\n$42.94\nDiscount :\n$0.00\nTotal Charge :\n$42.94\nChange Due(-) :\n$0.00\nTender\nCredit Card :\n$42.94\nTotal Tendered :\n$42.94\nOther Details\nCard ( VISA )\n$42.94\nAuth Code\n05069D\nCard Number\nXXXX XXXX XXXX 3299\nCard Holder Name\nCARDHO DERVISA\n842040656649\nThank you for your our new dell please areas', 'analysis': {'merchant_name': 'AAPNA BAZAAR', 'total_amount': 42.94, 'date': '2025-04-06', 'items': [{'name': 'SWAD CHAPPATI', 'quantity': 4, 'price': 8.99}, {'name': 'BHAGWATI METHI D 10 OZ', 'quantity': 1, 'price': 2.49}, {'name': 'HALDIRAMS PANEER 400 g', 'quantity': 1, 'price': 4.49}]}}
                 
                 # Save the extracted data to database
                 bill = User.save_extracted_data(db, current_user.id, result['analysis'])
-                
+                logger.info(f"Data returned.")
                 return jsonify({
                     'message': 'File uploaded and processed successfully',
                     'filename': filename,
@@ -190,6 +228,7 @@ def upload_file(current_user):
 
 @app.route('/api/protected', methods=['GET'])
 @token_required
+@log_info
 def protected(current_user):
     return jsonify({
         'message': 'This is a protected route',
@@ -198,6 +237,7 @@ def protected(current_user):
 
 @app.route('/api/bills', methods=['GET'])
 @token_required
+@log_info
 def get_user_bills(current_user):
     try:
         # Get all bills for the current user
@@ -216,6 +256,7 @@ def get_user_bills(current_user):
 
 @app.route('/api/bills/<int:bill_id>/items', methods=['GET'])
 @token_required
+@log_info
 def get_bill_items(current_user, bill_id):
     try:
         print(bill_id)
