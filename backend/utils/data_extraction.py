@@ -3,6 +3,7 @@ import os
 from botocore.exceptions import ClientError
 from config import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
 from utils.ai_services import AIServices
+import uuid
 
 class DataExtractor:
     def __init__(self):
@@ -96,4 +97,37 @@ class DataExtractor:
             raise Exception(f"AWS Textract error: {str(e)}")
         except Exception as e:
             print(f"Error processing text: {str(e)}")
-            raise Exception(f"Error processing text: {str(e)}") 
+            raise Exception(f"Error processing text: {str(e)}")
+
+    @staticmethod
+    def upload_image_to_s3(image_path, bucket_name, user_id, content_type="image/jpeg", folder="uploads"):
+        """
+        Uploads an image file to an S3 bucket.
+        Args:
+            image_path: Path to the image file
+            bucket_name: The S3 bucket name
+            user_id: The user ID to include in the filename
+            content_type: The MIME type of the image (default: 'image/jpeg')
+            folder: The S3 folder path (default: 'uploads')
+        Returns:
+            True if upload is successful, else False.
+        """
+        unique_filename = f"{user_id}_{uuid.uuid4()}.jpg"
+        s3_key = f"{folder}/{unique_filename}"
+        s3 = boto3.client('s3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_REGION
+        )
+        try:
+            with open(image_path, 'rb') as img_file:
+                s3.put_object(
+                    Bucket=bucket_name,
+                    Key=s3_key,
+                    Body=img_file,
+                    ContentType=content_type
+                )
+            return True
+        except (ClientError, Exception) as e:
+            print(f"Error uploading to S3: {e}")
+            return False 
