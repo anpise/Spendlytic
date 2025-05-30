@@ -51,6 +51,9 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 data_extractor = DataExtractor()
 ai_services = AIServices()
 
+# Load S3 bucket name from environment
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'spendlytic')
+
 # Create all database tables
 with app.app_context():
     db.create_all()
@@ -202,7 +205,7 @@ def upload_file(current_user):
                 from utils.data_extraction import DataExtractor
                 DataExtractor.upload_image_to_s3(
                     file_path,
-                    bucket_name='spendlytic',  # <-- Replace with your actual bucket name
+                    bucket_name=S3_BUCKET_NAME,
                     user_id=current_user.id,
                     content_type=file.content_type
                 )

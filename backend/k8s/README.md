@@ -2,6 +2,8 @@
 
 This guide provides commands for deploying and managing the Spendlytic backend on Kubernetes using minikube.
 
+See the [backend README](../README.md) for backend setup and the [project root README](../../README.md) for an overview of the Spendlytic project.
+
 ## Prerequisites
 - minikube installed
 - Docker installed
@@ -108,51 +110,14 @@ minikube delete
 
 Once the service is running, you can access these endpoints (replace PORT with actual port from service):
 
-1. Register:
-```bash
-curl -X POST http://localhost:PORT/api/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "password123"
-  }'
-```
+- Register: `POST /api/register`
+- Login: `POST /api/login`
+- Upload receipt: `POST /api/upload`
+- Get all bills: `GET /api/bills`
+- Get specific bill: `GET /api/bills/<id>`
+- Delete bill: `DELETE /api/bills/<id>`
 
-2. Login:
-```bash
-curl -X POST http://localhost:PORT/api/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123"
-  }'
-```
-
-3. Upload receipt:
-```bash
-curl -X POST http://localhost:PORT/api/upload \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -F "file=@/path/to/your/receipt.jpg"
-```
-
-4. Get all bills:
-```bash
-curl -X GET http://localhost:PORT/api/bills \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-5. Get specific bill:
-```bash
-curl -X GET http://localhost:PORT/api/bills/1 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-6. Delete bill:
-```bash
-curl -X DELETE http://localhost:PORT/api/bills/1 \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+See the [backend README](../README.md) for request/response examples and more details.
 
 ## Notes
 - Replace placeholder values in `secrets.yaml` with actual values before deployment

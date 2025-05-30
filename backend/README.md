@@ -1,6 +1,8 @@
 # Spendlytic Backend
 
-Backend service for Spendlytic - A smart expense tracking application.
+Backend service for Spendlytic - A smart expense tracking application. This service provides RESTful APIs for authentication, bill/receipt upload and processing, and analytics. It integrates with PostgreSQL, AWS, and OpenAI GPT-4o-mini.
+
+See the [project root README](../README.md) for an overview and the [frontend README](../frontend/README.md) for the web client.
 
 ## Tech Stack
 
@@ -9,6 +11,7 @@ Backend service for Spendlytic - A smart expense tracking application.
 - PostgreSQL (AWS RDS)
 - OpenAI GPT-4
 - Docker
+- AWS (S3, RDS)
 
 ## Setup with Docker
 
@@ -35,6 +38,7 @@ JWT_ACCESS_TOKEN_EXPIRES=30
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-1
+S3_BUCKET_NAME=your_s3_bucket_name
 
 # OpenAI Settings
 OPENAI_API_KEY=your_openai_api_key
@@ -74,6 +78,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./backend:/app
@@ -205,7 +210,7 @@ python app.py
 
 ## Environment Variables
 
-All required environment variables are listed in the `.env` file template above. Make sure to set them before running the application.
+All required environment variables are listed in the `.env` file template above. Make sure to set them before running the application. The S3 bucket name is required for file uploads to AWS S3.
 
 ## Security
 
