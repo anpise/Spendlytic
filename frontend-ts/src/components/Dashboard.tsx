@@ -1,79 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { fetchBills, fetchBillItems } from '../services/api';
-
-interface Bill {
-  id: string;
-  merchant_name: string;
-  date: string;
-  total_amount: number;
-}
-
-interface BillItem {
-  id: string;
-  description: string;
-  quantity: number;
-  price: number;
-}
+import React from 'react';
 
 const Dashboard: React.FC = () => {
-  const [bills, setBills] = useState<Bill[]>([]);
-  const [itemsMap, setItemsMap] = useState<{ [key: string]: BillItem[] }>({});
-  const [expandedBillId, setExpandedBillId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchBills().then(res => setBills(res.data.bills));
-  }, []);
-
-  const toggleBillItems = async (billId: string) => {
-    if (expandedBillId === billId) {
-      setExpandedBillId(null); // collapse
-    } else {
-      if (!itemsMap[billId]) {
-        const res = await fetchBillItems(billId);
-        setItemsMap(prev => ({ ...prev, [billId]: res.data.items }));
-      }
-      setExpandedBillId(billId);
-    }
-  };
-
   return (
-    <div className="container">
-      <h2>All Receipts</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {bills.map(b => (
-          <li key={b.id} style={{ marginBottom: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{b.merchant_name} ({b.date.split('T')[0]}) - ${b.total_amount}</span>
-              <button
-                style={{
-                  fontSize: '0.875rem',
-                  padding: '4px 10px',
-                  whiteSpace: 'nowrap',
-                  width: 'auto',
-                  minWidth: 'fit-content',
-                  backgroundColor: '#4f46e5',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => toggleBillItems(b.id)}
-              >
-                {expandedBillId === b.id ? 'Hide Items' : 'View Items'}
-              </button>
-            </div>
-
-            {expandedBillId === b.id && itemsMap[b.id] && (
-              <ul style={{ marginTop: '0.75rem' }}>
-                <strong>Items:</strong>
-                {itemsMap[b.id].map(i => (
-                  <li key={i.id}>{i.description} x{i.quantity} - ${i.price}</li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
+    <div style={{ padding: '2.5rem 1rem', maxWidth: 900, margin: '80px auto 0 auto' }}>
+      <h1 style={{ color: '#764ba2', fontWeight: 700, fontSize: '2rem', marginBottom: '2rem' }}>
+        Welcome to your Dashboard
+      </h1>
+      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '2.5rem' }}>
+        <div style={{ flex: 1, minWidth: 220, background: 'linear-gradient(135deg, #a78bfa 0%, #667eea 100%)', borderRadius: 16, color: '#fff', padding: '1.5rem', boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)' }}>
+          <div style={{ fontSize: '1.1rem', marginBottom: 8 }}>Total Spent</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>$2,350</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 220, background: 'linear-gradient(135deg, #764ba2 0%, #a78bfa 100%)', borderRadius: 16, color: '#fff', padding: '1.5rem', boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)' }}>
+          <div style={{ fontSize: '1.1rem', marginBottom: 8 }}>Bills Uploaded</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>12</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 220, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 16, color: '#fff', padding: '1.5rem', boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)' }}>
+          <div style={{ fontSize: '1.1rem', marginBottom: 8 }}>AI Insights</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>3</div>
+        </div>
+      </div>
+      <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(102, 126, 234, 0.06)', padding: '1.5rem', minHeight: 200 }}>
+        <h2 style={{ color: '#764ba2', fontWeight: 600, fontSize: '1.2rem', marginBottom: '1rem' }}>Recent Transactions</h2>
+        <div style={{ color: '#888', fontStyle: 'italic' }}>
+          (Your recent transactions will appear here.)
+        </div>
+      </div>
     </div>
   );
 };

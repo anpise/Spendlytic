@@ -1,0 +1,223 @@
+.auth-modal-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
+  background-blend-mode: overlay;
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-modal-card {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(60, 16, 83, 0.25);
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 320px;
+  max-width: 95vw;
+  width: 400px;
+  color: #fff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-modal-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.auth-modal-logo {
+  font-size: 2.2rem;
+  margin-right: 0.7rem;
+  display: flex;
+  align-items: center;
+}
+
+.auth-modal-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #f3e8ff;
+}
+
+.auth-modal-close {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.2rem;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.auth-modal-close:hover {
+  color: #a78bfa;
+}
+
+.auth-modal-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (max-width: 500px) {
+  .auth-modal-card {
+    width: 98vw;
+    min-width: unset;
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+  }
+  .auth-modal-title {
+    font-size: 1.2rem;
+  }
+}
+
+.navbar-root {
+  width: 100%;
+  background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+  color: #f3e8ff;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1100;
+  box-shadow: 0 2px 8px rgba(60,16,83,0.12);
+}
+
+.navbar-content {
+  max-width: clamp(320px, 90vw, 1200px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 2rem;
+  position: relative;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.2rem;
+}
+
+.navbar-links a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover {
+  color: #a78bfa;
+}
+
+.navbar-link-btn {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.navbar-link-btn:hover {
+  color: #a78bfa;
+  text-decoration: underline;
+}
+
+.navbar-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-left: 1rem;
+  z-index: 1200;
+}
+
+.navbar-menu-icon {
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: #a78bfa;
+  border-radius: 2px;
+  position: relative;
+}
+.navbar-menu-icon::before,
+.navbar-menu-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  background: #a78bfa;
+  border-radius: 2px;
+  transition: 0.2s;
+}
+.navbar-menu-icon::before {
+  top: -9px;
+}
+.navbar-menu-icon::after {
+  top: 9px;
+}
+
+@media (max-width: 700px) {
+  .navbar-menu-btn {
+    display: block;
+  }
+  .navbar-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 2rem;
+    background: rgba(60, 16, 83, 0.98);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 120px;
+    padding: 0.7rem 0.5rem;
+    z-index: 1201;
+    margin-top: 0.5rem;
+  }
+  .navbar-links.open {
+    display: flex;
+  }
+  .navbar-content {
+    padding: 0.7rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-content {
+    padding: 0.7rem 0.5rem;
+  }
+  .navbar-links {
+    right: 0.5rem;
+    min-width: 100px;
+  }
+} 

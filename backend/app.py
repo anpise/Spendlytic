@@ -56,8 +56,11 @@ S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', 'spendlytic')
 
 # Create all database tables
 with app.app_context():
-    db.create_all()
-    logger.info("Database tables created successfully")
+    try:
+        db.create_all()
+        print("Database tables created successfully")
+    except Exception as e:
+        print(f"Error creating database tables: {str(e)}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'].split(',')
@@ -190,7 +193,22 @@ def upload_file(current_user):
             logger.info(f"File uploaded by user {current_user.id}: {filename}")
             try:
                 # Extract text from file
-                result = data_extractor.extract_text_from_file(file_path)
+                # result = data_extractor.extract_text_from_file(file_path)
+
+                # # Extract text from file
+                # result = data_extractor.extract_text_from_file(file_path)
+                
+                
+                # if 'error' in result:
+                #     return jsonify({
+                #         'message': 'Error processing file',
+                #         'error': result['error']
+                #     }), 500
+                
+                # print(result)
+
+                result = {'extracted_text': 'AAPNA BAZAAR\n2556 E. 3Rd St.\nBloomington.Indiana-47401\nPhone : (812)-336-1833\nReceipt Date :\nAPR 06,2025 11:05 AM\nSales Date :\nAPR 06,2025 11:05 AM\nRegister No. : 1\nBatch : 60385\nPOS OrderId :\n101-20250406110504195\nLast Print\n83362 [F]SWAD CHAPPATI\n04 @\n$8.99\n$35.95\n77658 [F]BHAGWATI METHI D 10 OZ\n01 @\n$2.49\n$2.49\n71598 [F]HALDIRAMS PANEER 400 g\n01 @\n$4.49\n$4.49\nSubTotal : [QTY :6]\n$42.94\nDiscount :\n$0.00\nTotal Charge :\n$42.94\nChange Due(-) :\n$0.00\nTender\nCredit Card :\n$42.94\nTotal Tendered :\n$42.94\nOther Details\nCard ( VISA )\n$42.94\nAuth Code\n05069D\nCard Number\nXXXX XXXX XXXX 3299\nCard Holder Name\nCARDHO DERVISA\n842040656649\nThank you for your our new dell please areas', 'analysis': {'merchant_name': 'AAPNA BAZAAR', 'total_amount': 42.94, 'date': '2025-04-06', 'items': [{'name': 'SWAD CHAPPATI', 'quantity': 4, 'price': 8.99}, {'name': 'BHAGWATI METHI D 10 OZ', 'quantity': 1, 'price': 2.49}, {'name': 'HALDIRAMS PANEER 400 g', 'quantity': 1, 'price': 4.49}]}}
+                
                 
                 
                 if 'error' in result:
@@ -201,16 +219,16 @@ def upload_file(current_user):
                     }), 500
                 
                 
-                # Upload the image to S3 after extraction
-                from utils.data_extraction import DataExtractor
-                DataExtractor.upload_image_to_s3(
-                    file_path,
-                    bucket_name=S3_BUCKET_NAME,
-                    user_id=current_user.id,
-                    content_type=file.content_type
-                )
+                # # Upload the image to S3 after extraction
+                # from utils.data_extraction import DataExtractor
+                # DataExtractor.upload_image_to_s3(
+                #     file_path,
+                #     bucket_name=S3_BUCKET_NAME,
+                #     user_id=current_user.id,
+                #     content_type=file.content_type
+                # )
                 
-                logger.info(f"Image uploaded to S3 for user {current_user.id}: {filename}")
+                # logger.info(f"Image uploaded to S3 for user {current_user.id}: {filename}")
                 
                 # Save the extracted data to database
                 bill = User.save_extracted_data(db, current_user.id, result['analysis'])

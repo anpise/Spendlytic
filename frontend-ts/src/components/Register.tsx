@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import AuthModal from './AuthModal';
+import './Auth.css';
 import { registerUser } from '../services/api';
 
 const Register: React.FC = () => {
@@ -12,39 +14,46 @@ const Register: React.FC = () => {
     try {
       await registerUser(form);
       alert('Registered successfully!');
-      navigate('/');
+      navigate('/login');
     } catch (err) {
       setError('Registration failed');
     }
   };
 
   return (
-    <div className="container">
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
+    <AuthModal>
+      <h2 className="auth-title">Create Account</h2>
+      <form className="auth-form" onSubmit={handleSubmit} style={{ width: '100%' }}>
         <input
+          className="auth-input"
           name="username"
           onChange={e => setForm({ ...form, username: e.target.value })}
           placeholder="Username"
           required
         />
         <input
+          className="auth-input"
           name="email"
+          type="email"
           onChange={e => setForm({ ...form, email: e.target.value })}
           placeholder="Email"
           required
         />
         <input
+          className="auth-input"
           name="password"
           type="password"
           onChange={e => setForm({ ...form, password: e.target.value })}
           placeholder="Password"
           required
         />
-        <button type="submit">Register</button>
-        {error && <p className="error">{error}</p>}
+        <button className="auth-button" type="submit">Sign Up</button>
+        {error && <p className="auth-error">{error}</p>}
       </form>
-    </div>
+      <div className="auth-link">
+        Already have an account? <Link to="/login">Sign in</Link>
+      </div>
+    </AuthModal>
   );
 };
 

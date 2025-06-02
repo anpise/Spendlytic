@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import AuthModal from './AuthModal';
+import './Auth.css';
 import { loginUser } from '../services/api';
 
 const Login: React.FC = () => {
@@ -19,26 +21,31 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="container">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
+    <AuthModal>
+      <h2 className="auth-title">Sign In</h2>
+      <form className="auth-form" onSubmit={handleSubmit} style={{ width: '100%' }}>
         <input
+          className="auth-input"
           name="username"
           onChange={e => setForm({ ...form, username: e.target.value })}
           placeholder="Username or Email"
           required
         />
         <input
+          className="auth-input"
           name="password"
           type="password"
           onChange={e => setForm({ ...form, password: e.target.value })}
           placeholder="Password"
           required
         />
-        <button type="submit">Login</button>
-        {error && <p className="error">{error}</p>}
+        <button className="auth-button" type="submit">Sign In</button>
+        {error && <p className="auth-error">{error}</p>}
       </form>
-    </div>
+      <div className="auth-link">
+        Don't have an account? <Link to="/register">Sign up</Link>
+      </div>
+    </AuthModal>
   );
 };
 
