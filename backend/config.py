@@ -1,5 +1,8 @@
 import os
 from dotenv import load_dotenv
+import sqlite3
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
 
 # Load environment variables
 load_dotenv()
@@ -15,7 +18,21 @@ DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT', '5432')
 DB_NAME = os.getenv('DB_NAME', 'spendlytic')
 
-SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Try PostgreSQL connection first
+postgres_uri = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+sqlite_uri = 'sqlite:///spendlytic.db'
+
+try:
+    # Test PostgreSQL connection
+    engine = create_engine(postgres_uri)
+    engine.connect()
+    SQLALCHEMY_DATABASE_URI = postgres_uri
+    print("Connected to PostgreSQL database")
+except (OperationalError, Exception) as e:
+    print(f"PostgreSQL connection failed: {str(e)}")
+    print("Falling back to SQLite database")
+    SQLALCHEMY_DATABASE_URI = sqlite_uri
+
 SQLALCHEMY_TRACK_MODIFICATIONS = os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS', 'False')
 
 # File upload settings

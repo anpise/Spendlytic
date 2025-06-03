@@ -5,31 +5,41 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Upload from './components/Upload';
 import PrivateRoute from './components/PrivateRoute';
+import Home from './components/Home';
+import Navbar from './components/Navbar';
+import './App.css';
+
+const isLoggedIn = () => !!localStorage.getItem('token');
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/upload"
-          element={
-            <PrivateRoute>
-              <Upload />
-            </PrivateRoute>
-          }
-        />
-      </Routes>
-    </Router>
+    <div className="app-bg">
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/register" element={isLoggedIn() ? <Navigate to="/dashboard" /> : <Register />} />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/upload"
+            element={
+              <PrivateRoute>
+                <Upload />
+              </PrivateRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Router>
+    </div>
   );
 };
 

@@ -1,0 +1,207 @@
+body {
+  overflow-x: hidden;
+}
+
+.home-bg {
+  min-height: 100vh;
+  width: 100vw;
+  background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.home-navbar {
+  width: 100%;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: relative;
+  z-index: 2;
+}
+
+.home-navbar-content {
+  width: 100%;
+  max-width: clamp(320px, 90vw, 1200px);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem;
+  flex-wrap: wrap;
+}
+
+.home-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #5a67d8;
+  letter-spacing: 1px;
+}
+
+.home-nav-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.home-btn {
+  background: #667eea;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+}
+
+.home-btn:hover {
+  background: #5a67d8;
+}
+
+.home-btn-signup {
+  background: #764ba2;
+}
+
+.home-btn-signup:hover {
+  background: #5a3ea1;
+}
+
+.home-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 0 1rem;
+}
+
+.home-title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+}
+
+.home-desc {
+  font-size: 1.3rem;
+  max-width: 600px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px;
+  padding: 1.5rem 2rem;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.home-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin-left: 1rem;
+  z-index: 10;
+}
+
+.home-menu-icon {
+  display: block;
+  width: 28px;
+  height: 3px;
+  background: #5a67d8;
+  border-radius: 2px;
+  position: relative;
+}
+.home-menu-icon::before,
+.home-menu-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 28px;
+  height: 3px;
+  background: #5a67d8;
+  border-radius: 2px;
+  transition: 0.2s;
+}
+.home-menu-icon::before {
+  top: -9px;
+}
+.home-menu-icon::after {
+  top: 9px;
+}
+
+@media (max-width: 700px) {
+  .home-menu-btn {
+    display: block;
+  }
+  .home-nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 1.5rem;
+    background: rgba(255,255,255,0.97);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 140px;
+    padding: 0.7rem 0.5rem;
+    z-index: 9;
+    margin-top: 0.5rem;
+  }
+  .home-nav-links.open {
+    display: flex;
+  }
+  .home-navbar-content {
+    flex-direction: row;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    gap: 0.5rem;
+    position: relative;
+  }
+  .home-logo {
+    font-size: 1.3rem;
+  }
+  .home-nav-links {
+    gap: 0.7rem;
+  }
+  .home-btn, .home-btn-signup {
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+  }
+  .home-title {
+    font-size: 2rem;
+  }
+  .home-desc {
+    font-size: 1rem;
+    padding: 1rem 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-navbar-content {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.7rem 0.5rem;
+  }
+  .home-nav-links {
+    right: 0.5rem;
+    min-width: 120px;
+  }
+  .home-btn, .home-btn-signup {
+    width: 100%;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    text-align: center;
+  }
+  .home-title {
+    font-size: 1.3rem;
+  }
+  .home-desc {
+    font-size: 0.95rem;
+    padding: 0.7rem 0.3rem;
+  }
+} 
