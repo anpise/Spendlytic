@@ -3,8 +3,10 @@
   top: 0; left: 0; right: 0; bottom: 0;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%), url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
-  background-blend-mode: overlay;
+  background: 
+    linear-gradient(135deg, rgba(24,44,72,0.88) 0%, rgba(36,99,168,0.82) 100%),
+    url('/public/assets/finance-bg.png') center/cover no-repeat;
+  background-blend-mode: overlay, normal;
   backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
@@ -13,14 +15,14 @@
 }
 
 .auth-modal-card {
-  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(135deg, #1e3357 0%, #3b82f6 100%);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(60, 16, 83, 0.25);
+  box-shadow: 0 8px 32px rgba(24, 44, 72, 0.25);
   padding: 2.5rem 2rem 2rem 2rem;
   min-width: 320px;
   max-width: 95vw;
   width: 400px;
-  color: #fff;
+  color: #fffafa;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -62,7 +64,7 @@
   transition: color 0.2s;
 }
 .auth-modal-close:hover {
-  color: #a78bfa;
+  color: #3b82f6;
 }
 
 .auth-modal-content {
@@ -85,13 +87,13 @@
 
 .navbar-root {
   width: 100%;
-  background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+  background: linear-gradient(90deg, #1e3357 0%, #3b82f6 100%);
   color: #f3e8ff;
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1100;
-  box-shadow: 0 2px 8px rgba(60,16,83,0.12);
+  box-shadow: 0 2px 8px rgba(24,44,72,0.12);
 }
 
 .navbar-content {
@@ -128,11 +130,11 @@
 }
 
 .navbar-links a:hover {
-  color: #a78bfa;
+  color: #05a7e7;
 }
 
 .navbar-link-btn {
-  color: #fff;
+  color: #05a7e7;
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
@@ -145,7 +147,7 @@
 }
 
 .navbar-link-btn:hover {
-  color: #a78bfa;
+  color: #05a7e7;
   text-decoration: underline;
 }
 
@@ -163,7 +165,7 @@
   display: block;
   width: 28px;
   height: 3px;
-  background: #a78bfa;
+  background: #05a7e7;
   border-radius: 2px;
   position: relative;
 }
@@ -174,7 +176,7 @@
   left: 0;
   width: 28px;
   height: 3px;
-  background: #a78bfa;
+  background: #05a7e7;
   border-radius: 2px;
   transition: 0.2s;
 }
@@ -194,18 +196,43 @@
     position: absolute;
     top: 100%;
     right: 2rem;
-    background: rgba(60, 16, 83, 0.98);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    border-radius: 8px;
+    background: rgba(30,58,138,0.92);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 16px rgba(30,58,138,0.12);
+    border-radius: 12px;
     flex-direction: column;
-    gap: 0.5rem;
-    min-width: 120px;
+    gap: 0.2rem;
+    min-width: 160px;
     padding: 0.7rem 0.5rem;
     z-index: 1201;
     margin-top: 0.5rem;
   }
   .navbar-links.open {
     display: flex;
+  }
+  .navbar-links a, .navbar-link-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #e0e7ef;
+    background: none;
+    margin: 0;
+    transition: background 0.2s, color 0.2s;
+    display: block;
+    outline: none;
+    border: none;
+    cursor: pointer;
+  }
+  .navbar-links a:hover, .navbar-link-btn:hover {
+    background: #2563eb;
+    color: #fff;
+    gap: 0.2rem;
+    min-width: 100px;
+    max-width: 145px;
+    padding: 0.7rem 0.5rem;
   }
   .navbar-content {
     padding: 0.7rem 1rem;

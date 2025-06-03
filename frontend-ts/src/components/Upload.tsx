@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
+import './Auth.css';
 
 const Upload: React.FC = () => {
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [fileName, setFileName] = useState('');
   const [status, setStatus] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -11,37 +13,81 @@ const Upload: React.FC = () => {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!fileInput.current?.files?.[0]) {
       setStatus('Please select a file to upload.');
       return;
     }
-    // Simulate upload
+    setIsUploading(true);
     setStatus('Uploading...');
-    setTimeout(() => {
-      setStatus('Upload successful!');
-    }, 1500);
+    const formData = new FormData();
+    formData.append('file', fileInput.current.files[0]);
+    try {
+      const res = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: formData,
+      });
+      if (res.ok) {
+        setStatus('Upload successful!');
+      } else {
+        const data = await res.json();
+        setStatus(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      setStatus('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
+  const isSuccess = status === 'Upload successful!';
+  const isError = status && !isSuccess && status !== 'Uploading...';
+
   return (
-    <div style={{ padding: '2.5rem 1rem', maxWidth: 500, margin: '80px auto 0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px rgba(102, 126, 234, 0.08)' }}>
-      <h1 style={{ color: '#764ba2', fontWeight: 700, fontSize: '2rem', marginBottom: '2rem' }}>
+    <div style={{
+      padding: '2.5rem 1rem',
+      maxWidth: 420,
+      margin: '100px auto 0 auto',
+      background: 'rgba(30,58,138,0.10)',
+      borderRadius: 20,
+      boxShadow: '0 8px 32px rgba(30, 58, 138, 0.18)',
+      color: '#fff',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    }}>
+      <h2 className="auth-title" style={{ color: '#e0e7ef', marginBottom: '2rem' }}>
         Upload a Bill or Receipt
-      </h1>
-      <input
-        type="file"
-        ref={fileInput}
-        onChange={handleFileChange}
-        style={{ marginBottom: '1.2rem', fontSize: '1rem' }}
-      />
-      <div style={{ marginBottom: '1.2rem', color: '#764ba2', fontWeight: 500 }}>{fileName}</div>
+      </h2>
+      <label htmlFor="file-upload" className="upload-file-label">
+        <input
+          id="file-upload"
+          type="file"
+          ref={fileInput}
+          onChange={handleFileChange}
+          className="upload-file-input"
+        />
+      </label>
+      {fileName && <div className="upload-file-name">{fileName}</div>}
       <button
+        className="auth-button"
         onClick={handleUpload}
-        style={{ background: 'linear-gradient(90deg, #764ba2 0%, #667eea 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', marginBottom: '1.2rem' }}
+        style={{ width: '100%', marginBottom: '1.2rem' }}
+        disabled={isUploading}
       >
-        Upload
+        {isUploading ? 'Uploading...' : 'Upload'}
       </button>
-      <div style={{ color: status === 'Upload successful!' ? '#43e97b' : '#a78bfa', fontWeight: 500 }}>{status}</div>
+      {isUploading && (
+        <div className="loader">
+          <div className="loader-spinner"></div>
+        </div>
+      )}
+      {status && !isUploading && (
+        <div className={`upload-status${isSuccess ? ' success' : ''}${isError ? ' error' : ''}`}>{status}</div>
+      )}
     </div>
   );
 };

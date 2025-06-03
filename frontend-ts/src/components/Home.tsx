@@ -12,7 +12,7 @@ const Home: React.FC = () => {
         <Link to="/login" className="auth-button" style={{ width: '100%', textAlign: 'center', fontSize: '1.1rem' }}>
           Login
         </Link>
-        <Link to="/register" className="auth-button" style={{ width: '100%', textAlign: 'center', fontSize: '1.1rem', background: '#a78bfa' }}>
+        <Link to="/register" className="auth-button" style={{ width: '100%', textAlign: 'center', fontSize: '1.1rem' }}>
           Sign Up
         </Link>
       </div>

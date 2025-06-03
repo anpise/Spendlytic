@@ -4,10 +4,10 @@ import './AuthModal.css'; // For z-index and background consistency
 
 const AnalyticsIcon = () => (
   <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="5" y="20" width="4" height="11" rx="2" fill="#a78bfa"/>
-    <rect x="14" y="13" width="4" height="18" rx="2" fill="#fff"/>
-    <rect x="23" y="7" width="4" height="24" rx="2" fill="#f3e8ff"/>
-    <rect x="32" y="2" width="4" height="29" rx="2" fill="#764ba2"/>
+    <rect x="5" y="20" width="4" height="11" rx="2" fill="#60a5fa"/>
+    <rect x="14" y="13" width="4" height="18" rx="2" fill="#3b82f6"/>
+    <rect x="23" y="7" width="4" height="24" rx="2" fill="#2563eb"/>
+    <rect x="32" y="2" width="4" height="29" rx="2" fill="#1e40af"/>
   </svg>
 );
 
