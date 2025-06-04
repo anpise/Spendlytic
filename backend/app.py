@@ -195,8 +195,8 @@ def upload_file(current_user):
                 # Extract text from file
                 # result = data_extractor.extract_text_from_file(file_path)
 
-                # # Extract text from file
-                # result = data_extractor.extract_text_from_file(file_path)
+                # Extract text from file
+                result = data_extractor.extract_text_from_file(file_path)
                 
                 
                 # if 'error' in result:
@@ -207,7 +207,7 @@ def upload_file(current_user):
                 
                 # print(result)
 
-                result = {'extracted_text': 'AAPNA BAZAAR\n2556 E. 3Rd St.\nBloomington.Indiana-47401\nPhone : (812)-336-1833\nReceipt Date :\nAPR 06,2025 11:05 AM\nSales Date :\nAPR 06,2025 11:05 AM\nRegister No. : 1\nBatch : 60385\nPOS OrderId :\n101-20250406110504195\nLast Print\n83362 [F]SWAD CHAPPATI\n04 @\n$8.99\n$35.95\n77658 [F]BHAGWATI METHI D 10 OZ\n01 @\n$2.49\n$2.49\n71598 [F]HALDIRAMS PANEER 400 g\n01 @\n$4.49\n$4.49\nSubTotal : [QTY :6]\n$42.94\nDiscount :\n$0.00\nTotal Charge :\n$42.94\nChange Due(-) :\n$0.00\nTender\nCredit Card :\n$42.94\nTotal Tendered :\n$42.94\nOther Details\nCard ( VISA )\n$42.94\nAuth Code\n05069D\nCard Number\nXXXX XXXX XXXX 3299\nCard Holder Name\nCARDHO DERVISA\n842040656649\nThank you for your our new dell please areas', 'analysis': {'merchant_name': 'AAPNA BAZAAR', 'total_amount': 42.94, 'date': '2025-04-06', 'items': [{'name': 'SWAD CHAPPATI', 'quantity': 4, 'price': 8.99}, {'name': 'BHAGWATI METHI D 10 OZ', 'quantity': 1, 'price': 2.49}, {'name': 'HALDIRAMS PANEER 400 g', 'quantity': 1, 'price': 4.49}]}}
+                # result = {'extracted_text': 'AAPNA BAZAAR\n2556 E. 3Rd St.\nBloomington.Indiana-47401\nPhone : (812)-336-1833\nReceipt Date :\nAPR 06,2025 11:05 AM\nSales Date :\nAPR 06,2025 11:05 AM\nRegister No. : 1\nBatch : 60385\nPOS OrderId :\n101-20250406110504195\nLast Print\n83362 [F]SWAD CHAPPATI\n04 @\n$8.99\n$35.95\n77658 [F]BHAGWATI METHI D 10 OZ\n01 @\n$2.49\n$2.49\n71598 [F]HALDIRAMS PANEER 400 g\n01 @\n$4.49\n$4.49\nSubTotal : [QTY :6]\n$42.94\nDiscount :\n$0.00\nTotal Charge :\n$42.94\nChange Due(-) :\n$0.00\nTender\nCredit Card :\n$42.94\nTotal Tendered :\n$42.94\nOther Details\nCard ( VISA )\n$42.94\nAuth Code\n05069D\nCard Number\nXXXX XXXX XXXX 3299\nCard Holder Name\nCARDHO DERVISA\n842040656649\nThank you for your our new dell please areas', 'analysis': {'merchant_name': 'AAPNA BAZAAR', 'total_amount': 42.94, 'date': '2025-04-06', 'items': [{'name': 'SWAD CHAPPATI', 'quantity': 4, 'price': 8.99}, {'name': 'BHAGWATI METHI D 10 OZ', 'quantity': 1, 'price': 2.49}, {'name': 'HALDIRAMS PANEER 400 g', 'quantity': 1, 'price': 4.49}]}}
                 
                 
                 
