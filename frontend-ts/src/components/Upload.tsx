@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Auth.css';
 
 const Upload: React.FC = () => {
@@ -6,6 +7,7 @@ const Upload: React.FC = () => {
   const [fileName, setFileName] = useState('');
   const [status, setStatus] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -32,6 +34,9 @@ const Upload: React.FC = () => {
       });
       if (res.ok) {
         setStatus('Upload successful!');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1200);
       } else {
         const data = await res.json();
         setStatus(data.message || 'Upload failed');

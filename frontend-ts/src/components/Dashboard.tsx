@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 interface BillItem {
   id: number;
   description: string;
   price: string;
   quantity: number;
+  category?: string;
 }
 
 interface Bill {
@@ -38,6 +41,9 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedBillId, setExpandedBillId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<'yearly' | 'monthly' | 'weekly'>('monthly');
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -49,6 +55,11 @@ const Dashboard: React.FC = () => {
             Authorization: `Bearer ${localStorage.getItem('token') || ''}`
           }
         });
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login');
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setBills(data.bills || []);
@@ -63,11 +74,82 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchBills();
-  }, []);
+  }, [navigate]);
 
   const toggleExpand = (id: number) => {
     setExpandedBillId(expandedBillId === id ? null : id);
   };
+
+  // --- Analytics Data Aggregation ---
+  function getYearlyData() {
+    const yearlyTotals: { [key: string]: number } = {};
+    bills.forEach(bill => {
+      if (!bill.date) return;
+      const date = new Date(bill.date);
+      if (isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}`;
+      yearlyTotals[key] = (yearlyTotals[key] || 0) + parseFloat(bill.total_amount);
+    });
+    return Object.entries(yearlyTotals)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([key, total]) => ({
+        label: key,
+        total: Number(total.toFixed(2)),
+      }));
+  }
+
+  function getMonthlyData() {
+    const monthlyTotals: { [key: string]: number } = {};
+    bills.forEach(bill => {
+      if (!bill.date) return;
+      const date = new Date(bill.date);
+      if (isNaN(date.getTime())) return;
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`; // e.g. '2025-4'
+      monthlyTotals[key] = (monthlyTotals[key] || 0) + parseFloat(bill.total_amount);
+    });
+    // Sort by date
+    return Object.entries(monthlyTotals)
+      .sort(([a], [b]) => new Date(a).getTime() - new Date(b).getTime())
+      .map(([key, total]) => {
+        const [year, month] = key.split('-');
+        const date = new Date(Number(year), Number(month) - 1);
+        return {
+          label: date.toLocaleString('default', { month: 'short', year: 'numeric' }),
+          total: Number(total.toFixed(2)),
+        };
+      });
+  }
+
+  function getWeeklyData() {
+    const weeklyTotals: { [key: string]: number } = {};
+    bills.forEach(bill => {
+      if (!bill.date) return;
+      const date = new Date(bill.date);
+      if (isNaN(date.getTime())) return;
+      // Get ISO week number
+      const year = date.getFullYear();
+      const firstJan = new Date(date.getFullYear(), 0, 1);
+      const days = Math.floor((date.getTime() - firstJan.getTime()) / (24 * 60 * 60 * 1000));
+      const week = Math.ceil((days + firstJan.getDay() + 1) / 7);
+      const key = `${year}-W${week}`;
+      weeklyTotals[key] = (weeklyTotals[key] || 0) + parseFloat(bill.total_amount);
+    });
+    // Sort by week
+    return Object.entries(weeklyTotals)
+      .sort(([a], [b]) => new Date(a.split('-W')[0]).getTime() - new Date(b.split('-W')[0]).getTime() || Number(a.split('-W')[1]) - Number(b.split('-W')[1]))
+      .map(([key, total]) => {
+        const [year, week] = key.split('-W');
+        return {
+          label: `W${week} ${year}`,
+          total: Number(total.toFixed(2)),
+        };
+      });
+  }
+
+  let chartData: { label: string; total: number }[] = [];
+  if (filter === 'yearly') chartData = getYearlyData();
+  else if (filter === 'monthly') chartData = getMonthlyData();
+  else chartData = getWeeklyData();
 
   return (
     <div className="dashboard-root" style={{ padding: '2.5rem 1rem', maxWidth: 1000, margin: '100px auto 0 auto' }}>
@@ -79,6 +161,52 @@ const Dashboard: React.FC = () => {
         .dashboard-root, .dashboard-root * {
           font-family: 'Inter', 'Montserrat', Arial, sans-serif;
           color: #f3f6fa;
+        }
+        .dashboard-tabs {
+          display: flex;
+          gap: 1.5rem;
+          margin-bottom: 2.2rem;
+        }
+        .dashboard-tab-btn {
+          background: none;
+          border: none;
+          color: #7dd3fc;
+          font-size: 1.15rem;
+          font-weight: 700;
+          padding: 0.7rem 1.5rem 0.7rem 1.5rem;
+          border-radius: 8px 8px 0 0;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+        .dashboard-tab-btn.active, .dashboard-tab-btn:focus {
+          color: #3b82f6;
+        }
+        .analytics-filter-btns {
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.2rem;
+        }
+        .analytics-filter-btn {
+          background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+          color: #fff;
+          font-weight: 600;
+          border: none;
+          border-radius: 5px;
+          padding: 0.5rem 1.2rem;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: color 0.3s, box-shadow 0.2s;
+          box-shadow: 0 2px 8px rgba(59,130,246,0.08);
+        }
+        .analytics-filter-btn.active, .analytics-filter-btn:focus {
+          color: #e0e7ef;
+        }
+        .analytics-chart-card {
+          background: rgba(30,58,138,0.10);
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(30,58,138,0.08);
+          padding: 1.5rem;
+          margin-bottom: 2.5rem;
         }
         .bill-row {
           transition: background 0.18s;
@@ -137,10 +265,69 @@ const Dashboard: React.FC = () => {
         th {
           color: #7dd3fc !important;
         }
+        .bill-item-category {
+          display: inline-block;
+          margin-left: 0.7em;
+          background: #233e5c;
+          color: #7dd3fc;
+          font-size: 0.85em;
+          font-weight: 600;
+          border-radius: 6px;
+          padding: 0.13em 0.7em 0.13em 0.7em;
+          vertical-align: middle;
+          letter-spacing: 0.02em;
+        }
       `}</style>
-      {loading && <div className="loader"><div className="loader-spinner"></div></div>}
-      {error && <div className="upload-status error">{error}</div>}
-      {!loading && !error && (
+      {/* --- Tabs --- */}
+      <div className="dashboard-tabs">
+        <button
+          className={`dashboard-tab-btn${activeTab === 'table' ? ' active' : ''}`}
+          onClick={() => setActiveTab('table')}
+        >
+          Bills Table
+        </button>
+        <button
+          className={`dashboard-tab-btn${activeTab === 'analytics' ? ' active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          Analytics
+        </button>
+      </div>
+      {/* --- End Tabs --- */}
+      {activeTab === 'analytics' && (
+        <div className="analytics-chart-card">
+          <div className="analytics-filter-btns">
+            <button
+              className={`analytics-filter-btn${filter === 'yearly' ? ' active' : ''}`}
+              onClick={() => setFilter('yearly')}
+            >
+              Yearly
+            </button>
+            <button
+              className={`analytics-filter-btn${filter === 'monthly' ? ' active' : ''}`}
+              onClick={() => setFilter('monthly')}
+            >
+              Monthly
+            </button>
+            <button
+              className={`analytics-filter-btn${filter === 'weekly' ? ' active' : ''}`}
+              onClick={() => setFilter('weekly')}
+            >
+              Weekly
+            </button>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#233e5c" />
+              <XAxis dataKey="label" stroke="#7dd3fc" fontSize={14} tickLine={false} axisLine={false} />
+              <YAxis stroke="#7dd3fc" fontSize={14} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`}/>
+              <Tooltip contentStyle={{ background: '#1e3357', border: 'none', borderRadius: 8, color: '#7dd3fc' }} labelStyle={{ color: '#7dd3fc' }} formatter={v => [`$${v}`, 'Total']} />
+              <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={40} label={{ position: 'top', fill: '#7dd3fc', fontWeight: 700, formatter: (v: number) => `$${v}` }} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+      {activeTab === 'table' && (
         <div style={{ overflowX: 'auto', background: 'rgba(30,58,138,0.10)', borderRadius: 16, boxShadow: '0 2px 12px rgba(30,58,138,0.08)', padding: '1.5rem' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', color: '#fff' }}>
             <thead>
@@ -174,7 +361,12 @@ const Dashboard: React.FC = () => {
                           <h4>Items:</h4>
                           {bill.items.map((item) => (
                             <div key={item.id} className="bill-item-row">
-                              <span className="bill-item-desc">{item.description}</span>
+                              <span className="bill-item-desc">
+                                {item.description}
+                                {item.category && (
+                                  <span className="bill-item-category">{item.category}</span>
+                                )}
+                              </span>
                               <span className="bill-item-meta">${item.price} × {item.quantity}</span>
                             </div>
                           ))}
@@ -188,6 +380,8 @@ const Dashboard: React.FC = () => {
           </table>
         </div>
       )}
+      {loading && <div className="loader"><div className="loader-spinner"></div></div>}
+      {error && <div className="upload-status error">{error}</div>}
     </div>
   );
 };

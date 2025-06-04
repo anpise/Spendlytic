@@ -8,13 +8,23 @@ const Register: React.FC = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       await registerUser(form);
-      alert('Registered successfully!');
-      navigate('/login');
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        setShowLoader(true);
+        setTimeout(() => {
+          setShowLoader(false);
+          navigate('/login');
+        }, 1200);
+      }, 1800);
     } catch (err) {
       setError('Registration failed');
     }
@@ -22,37 +32,49 @@ const Register: React.FC = () => {
 
   return (
     <AuthModal>
-      <h2 className="auth-title">Create Account</h2>
-      <form className="auth-form" onSubmit={handleSubmit} style={{ width: '100%' }}>
-        <input
-          className="auth-input"
-          name="username"
-          onChange={e => setForm({ ...form, username: e.target.value })}
-          placeholder="Username"
-          required
-        />
-        <input
-          className="auth-input"
-          name="email"
-          type="email"
-          onChange={e => setForm({ ...form, email: e.target.value })}
-          placeholder="Email"
-          required
-        />
-        <input
-          className="auth-input"
-          name="password"
-          type="password"
-          onChange={e => setForm({ ...form, password: e.target.value })}
-          placeholder="Password"
-          required
-        />
-        <button className="auth-button" type="submit">Sign Up</button>
-        {error && <p className="auth-error">{error}</p>}
-      </form>
-      <div className="auth-link">
-        Already have an account? <Link to="/login">Sign in</Link>
-      </div>
+      {showToast && <div className="toast">Registered successfully!</div>}
+      {showLoader && (
+        <div className="loader">
+          <div className="loader-spinner"></div>
+        </div>
+      )}
+      {!showLoader && <>
+        <h2 className="auth-title">Create Account</h2>
+        <form className="auth-form" onSubmit={handleSubmit} style={{ width: '100%' }} autoComplete="off">
+          <input
+            className="auth-input"
+            name="username"
+            onChange={e => setForm({ ...form, username: e.target.value })}
+            placeholder="Username"
+            required
+            autoComplete="off"
+          />
+          <input
+            className="auth-input"
+            name="email"
+            type="email"
+            onChange={e => setForm({ ...form, email: e.target.value })}
+            placeholder="Email"
+            required
+            autoComplete="off"
+          />
+          <input
+            className="auth-input"
+            name="password"
+            type="password"
+            onChange={e => setForm({ ...form, password: e.target.value })}
+            placeholder="Password"
+            required
+            autoComplete="new-password"
+            inputMode="text"
+          />
+          <button className="auth-button" type="submit">Sign Up</button>
+          {error && <p className="auth-error">{error}</p>}
+        </form>
+        <div className="auth-link">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </div>
+      </>}
     </AuthModal>
   );
 };
