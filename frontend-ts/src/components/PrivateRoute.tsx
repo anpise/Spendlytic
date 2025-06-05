@@ -32,7 +32,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     return null; // Still checking token validity
   }
 
-  return isValid ? <>{children}</> : <Navigate to="/" replace />;
+  return isValid ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute; 

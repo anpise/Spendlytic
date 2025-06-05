@@ -154,14 +154,14 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard-root" style={{ padding: '2.5rem 1rem', maxWidth: 1000, margin: '100px auto 0 auto' }}>
       <div className="dashboard-scroll">
-        <h1 className="dashboard-title" style={{ color: '#3b82f6', fontWeight: 700, fontSize: '2rem', marginBottom: '2rem' }}>
+        <h1 className="dashboard-title" style={{ color: '#bfdbfe', fontWeight: 700, fontSize: '2rem', marginBottom: '2.2rem', textAlign: 'center', letterSpacing: '0.01em' }}>
           Analytics Dashboard
         </h1>
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@500;700&display=swap');
           .dashboard-root, .dashboard-root * {
             font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-            color: #f3f6fa;
+            color: #bfdbfe;
           }
           .dashboard-tabs {
             display: flex;
@@ -171,16 +171,19 @@ const Dashboard: React.FC = () => {
           .dashboard-tab-btn {
             background: none;
             border: none;
-            color: #7dd3fc;
+            color: #bfdbfe;
             font-size: 1.15rem;
             font-weight: 700;
             padding: 0.7rem 1.5rem 0.7rem 1.5rem;
             border-radius: 8px 8px 0 0;
             cursor: pointer;
             transition: color 0.2s;
+            opacity: 0.8;
           }
           .dashboard-tab-btn.active, .dashboard-tab-btn:focus {
-            color: #3b82f6;
+            color: #bfdbfe;
+            opacity: 1;
+            border-bottom: 2px solid #60a5fa;
           }
           .analytics-filter-btns {
             display: flex;
@@ -189,7 +192,7 @@ const Dashboard: React.FC = () => {
           }
           .analytics-filter-btn {
             background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-            color: #fff;
+            color: #bfdbfe;
             font-weight: 600;
             border: none;
             border-radius: 5px;
@@ -226,38 +229,47 @@ const Dashboard: React.FC = () => {
             transform: rotate(90deg);
           }
           .bill-items-card {
-            background: rgba(59,130,246,0.10);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(59,130,246,0.08);
-            padding: 1.1rem 1.2rem 1rem 2.2rem;
-            margin: 0.5rem 0 0.7rem 0;
+            background: rgba(30,58,138,0.18);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(30,58,138,0.10);
+            padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+            margin: 0.7rem 0 1.1rem 0;
           }
           .bill-items-card h4 {
-            color: #7dd3fc;
-            margin-bottom: 0.7rem;
-            font-size: 1.08rem;
+            color: #3b82f6;
+            margin-bottom: 1.1rem;
+            font-size: 1.13rem;
             font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.01em;
           }
           .bill-item-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.35rem 0;
-            border-bottom: 1px solid rgba(59,130,246,0.08);
-            font-size: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(59,130,246,0.13);
+            font-size: 1.04rem;
+            transition: background 0.18s;
           }
           .bill-item-row:last-child {
             border-bottom: none;
           }
           .bill-item-desc {
-            color: #f3f6fa;
+            color: #bfdbfe;
             font-weight: 500;
             font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+            flex: 1;
+            word-break: break-word;
           }
           .bill-item-meta {
-            color: #7dd3fc;
-            font-size: 0.98rem;
+            color: #3b82f6;
+            font-size: 1.04rem;
             font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+            font-weight: 600;
+            min-width: 110px;
+            text-align: right;
+            letter-spacing: 0.01em;
           }
           .dashboard-title {
             font-family: 'Montserrat', 'Inter', Arial, sans-serif;

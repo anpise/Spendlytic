@@ -178,7 +178,7 @@ body, html, #root, * {
 }
 .upload-file-input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: #b3c6ef;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
 }
 .upload-file-name {

@@ -17,7 +17,7 @@ API.interceptors.response.use(
       // Only redirect if token exists (user is logged in)
       if (error.response.status === 401 && localStorage.getItem('token')) {
         localStorage.removeItem('token');
-        window.location.href = '/';
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);

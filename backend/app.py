@@ -102,7 +102,7 @@ def check_upload_limits(user_id):
     return True, None
 
 @app.route('/api/register', methods=['POST'])
-@limiter.limit("5/minute")
+@limiter.limit("10/day")
 def register():
     logger.info("Registering new user")
     try:
@@ -152,7 +152,7 @@ def register():
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
-@limiter.limit("10/minute")
+@limiter.limit("10/day")
 def login():
     try:
         data = request.get_json()
@@ -227,7 +227,7 @@ def refresh(current_user):
 
 @app.route('/api/upload', methods=['POST'])
 @token_required
-@limiter.limit("20/day")
+@limiter.limit("10/day")
 def upload_file(current_user):
     try:
         # Check if file is present in request
