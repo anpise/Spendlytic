@@ -18,7 +18,7 @@ class Bill(db.Model):
     
     # Unique constraint for bill per user
     __table_args__ = (
-        db.UniqueConstraint('merchant_name', 'date', 'user_id', name='uix_bill_user'),
+        db.UniqueConstraint('merchant_name', 'date', 'total_amount', 'user_id', name='uix_bill_user'),
     )
 
     def to_dict(self):

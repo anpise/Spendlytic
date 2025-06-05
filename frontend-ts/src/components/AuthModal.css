@@ -121,20 +121,9 @@
   gap: 1.2rem;
 }
 
-.navbar-links a {
-  color: #fff;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 1rem;
-  transition: color 0.2s;
-}
-
-.navbar-links a:hover {
-  color: #05a7e7;
-}
-
+.navbar-links a,
 .navbar-link-btn {
-  color: #05a7e7;
+  color: #fff;
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
@@ -142,13 +131,20 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  transition: color 0.2s;
+  margin: 0 0.6rem 0 0;
+  transition: color 0.2s, background 0.2s;
   font-family: inherit;
+  outline: none;
+  display: inline-block;
 }
 
-.navbar-link-btn:hover {
+.navbar-links a:hover,
+.navbar-link-btn:hover,
+.navbar-links a:focus,
+.navbar-link-btn:focus {
   color: #05a7e7;
   text-decoration: underline;
+  background: none;
 }
 
 .navbar-menu-btn {
@@ -210,7 +206,8 @@
   .navbar-links.open {
     display: flex;
   }
-  .navbar-links a, .navbar-link-btn {
+  .navbar-links a,
+  .navbar-link-btn {
     width: 100%;
     text-align: left;
     padding: 0.7rem 1rem;
@@ -226,9 +223,13 @@
     border: none;
     cursor: pointer;
   }
-  .navbar-links a:hover, .navbar-link-btn:hover {
+  .navbar-links a:hover,
+  .navbar-link-btn:hover,
+  .navbar-links a:focus,
+  .navbar-link-btn:focus {
     background: #2563eb;
     color: #fff;
+    text-decoration: none;
     gap: 0.2rem;
     min-width: 100px;
     max-width: 145px;
@@ -247,4 +248,10 @@
     right: 0.5rem;
     min-width: 100px;
   }
+}
+
+.dashboard-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 8px; /* Optional: for scrollbar space */
 } 

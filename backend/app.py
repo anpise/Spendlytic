@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
 from models.user import User, db
+from models.upload import Upload
 from utils.auth import token_required, generate_token, refresh_token
 from config import *
 from utils.data_extraction import DataExtractor
@@ -10,6 +11,8 @@ from utils.ai_services import AIServices
 from models.bill import Bill
 from models.item import Item
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import logging
 
 class CustomFormatter(logging.Formatter):
@@ -31,13 +34,22 @@ logger.setLevel(logging.INFO)
 app = Flask(__name__)
 CORS(app)
 
+# Initialize rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=[RATELIMIT_DEFAULT],
+    storage_uri=RATELIMIT_STORAGE_URL,
+    strategy=RATELIMIT_STRATEGY
+)
+
 # Load configuration
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['DEBUG'] = DEBUG
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = int(MAX_CONTENT_LENGTH)
+app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 app.config['ALLOWED_EXTENSIONS'] = ALLOWED_EXTENSIONS
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
 
@@ -65,7 +77,30 @@ with app.app_context():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'].split(',')
 
+def check_upload_limits(user_id):
+    """
+    Check if user has exceeded upload limits
+    Returns: (bool, str) - (is_allowed, error_message)
+    """
+    # Check total uploads
+    total_uploads = Upload.get_user_total_uploads(db, user_id)
+    if total_uploads >= MAX_TOTAL_UPLOADS:
+        return False, f"Total upload limit of {MAX_TOTAL_UPLOADS} files reached"
+    
+    # Check daily uploads
+    daily_uploads = Upload.get_user_upload_count(db, user_id)
+    if daily_uploads >= MAX_UPLOADS_PER_DAY:
+        return False, f"Daily upload limit of {MAX_UPLOADS_PER_DAY} files reached"
+    
+    # Check total size
+    total_size = Upload.get_user_total_size(db, user_id)
+    if total_size >= MAX_TOTAL_SIZE_PER_DAY:
+        return False, f"Daily storage limit of {MAX_TOTAL_SIZE_PER_DAY/1024/1024}MB reached"
+    
+    return True, None
+
 @app.route('/api/register', methods=['POST'])
+@limiter.limit("5/minute")
 def register():
     logger.info("Registering new user")
     try:
@@ -106,6 +141,7 @@ def register():
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
+@limiter.limit("10/minute")
 def login():
     try:
         data = request.get_json()
@@ -171,6 +207,7 @@ def refresh(current_user):
 
 @app.route('/api/upload', methods=['POST'])
 @token_required
+@limiter.limit("20/day")
 def upload_file(current_user):
     try:
         # Check if file is present in request
@@ -185,55 +222,59 @@ def upload_file(current_user):
             logger.info(f"Upload failed: No file selected by user {current_user.id}")
             return jsonify({'message': 'No file selected'}), 400
 
+        # Check file size
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        
+        if file_size > MAX_FILE_SIZE:
+            logger.info(f"Upload failed: File too large by user {current_user.id}")
+            return jsonify({'message': f'File size exceeds maximum limit of {MAX_FILE_SIZE/1024/1024}MB'}), 400
+
+        # Check upload limits
+        is_allowed, error_message = check_upload_limits(current_user.id)
+        if not is_allowed:
+            logger.info(f"Upload failed: {error_message} for user {current_user.id}")
+            return jsonify({'message': error_message}), 400
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(file_path)
 
-            logger.info(f"File uploaded by user {current_user.id}: {filename}")
-            try:
-                # Extract text from file
-                # result = data_extractor.extract_text_from_file(file_path)
+            logger.info(f"File saved temporarily for user {current_user.id}: {filename}")
 
-                # Extract text from file
+            try:
+                data_extractor = DataExtractor()
+
+                # Extract data from the image
                 result = data_extractor.extract_text_from_file(file_path)
                 
+                # Upload the image to S3 after extraction
+                data_extractor.upload_image_to_s3(
+                    file_path,
+                    bucket_name=S3_BUCKET_NAME,
+                    user_id=current_user.id,
+                    content_type=file.content_type
+                )
                 
-                # if 'error' in result:
-                #     return jsonify({
-                #         'message': 'Error processing file',
-                #         'error': result['error']
-                #     }), 500
-                
-                # print(result)
-
-                # result = {'extracted_text': 'AAPNA BAZAAR\n2556 E. 3Rd St.\nBloomington.Indiana-47401\nPhone : (812)-336-1833\nReceipt Date :\nAPR 06,2025 11:05 AM\nSales Date :\nAPR 06,2025 11:05 AM\nRegister No. : 1\nBatch : 60385\nPOS OrderId :\n101-20250406110504195\nLast Print\n83362 [F]SWAD CHAPPATI\n04 @\n$8.99\n$35.95\n77658 [F]BHAGWATI METHI D 10 OZ\n01 @\n$2.49\n$2.49\n71598 [F]HALDIRAMS PANEER 400 g\n01 @\n$4.49\n$4.49\nSubTotal : [QTY :6]\n$42.94\nDiscount :\n$0.00\nTotal Charge :\n$42.94\nChange Due(-) :\n$0.00\nTender\nCredit Card :\n$42.94\nTotal Tendered :\n$42.94\nOther Details\nCard ( VISA )\n$42.94\nAuth Code\n05069D\nCard Number\nXXXX XXXX XXXX 3299\nCard Holder Name\nCARDHO DERVISA\n842040656649\nThank you for your our new dell please areas', 'analysis': {'merchant_name': 'AAPNA BAZAAR', 'total_amount': 42.94, 'date': '2025-04-06', 'items': [{'name': 'SWAD CHAPPATI', 'quantity': 4, 'price': 8.99}, {'name': 'BHAGWATI METHI D 10 OZ', 'quantity': 1, 'price': 2.49}, {'name': 'HALDIRAMS PANEER 400 g', 'quantity': 1, 'price': 4.49}]}}
-                
-                
-                
-                if 'error' in result:
-                    logger.error(f"Error processing file for user {current_user.id}: {result['error']}")
-                    return jsonify({
-                        'message': 'Error processing file',
-                        'error': result['error']
-                    }), 500
-                
-                
-                # # Upload the image to S3 after extraction
-                # from utils.data_extraction import DataExtractor
-                # DataExtractor.upload_image_to_s3(
-                #     file_path,
-                #     bucket_name=S3_BUCKET_NAME,
-                #     user_id=current_user.id,
-                #     content_type=file.content_type
-                # )
-                
-                # logger.info(f"Image uploaded to S3 for user {current_user.id}: {filename}")
+                logger.info(f"Image uploaded to S3 for user {current_user.id}: {filename}")
                 
                 # Save the extracted data to database
                 bill = User.save_extracted_data(db, current_user.id, result['analysis'])
                 
                 logger.info(f"Extracted data saved to DB for user {current_user.id}, bill id: {bill.id}")
+
+                # Create upload record only after successful bill creation
+                upload = Upload(
+                    user_id=current_user.id,
+                    filename=filename,
+                    file_size=file_size
+                )
+                db.session.add(upload)
+                db.session.commit()
+                
+                logger.info(f"Upload record created for user {current_user.id}: {filename}")
                 
                 return jsonify({
                     'message': 'File uploaded and processed successfully',
@@ -321,6 +362,10 @@ def get_bill_items(current_user, bill_id):
 @app.route('/health', methods=['GET'])
 def health():
     logger.info("Health check endpoint accessed")
+    return jsonify({'status': 'healthy'}), 200
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
     return jsonify({'status': 'healthy'}), 200
 
 if __name__ == '__main__':

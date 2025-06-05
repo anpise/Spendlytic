@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { fetchBills } from '../services/api';
 import './AuthModal.css'; // For z-index and background consistency
 
 const AnalyticsIcon = () => (
@@ -11,31 +12,58 @@ const AnalyticsIcon = () => (
   </svg>
 );
 
-const isLoggedIn = () => !!localStorage.getItem('token');
-
 const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const loggedIn = isLoggedIn();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [billCount, setBillCount] = useState<number>(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+    if (token) {
+      fetchBills().then(res => {
+        setBillCount(res.data.bills.length);
+      }).catch(() => setBillCount(0));
+    } else {
+      setBillCount(0);
+    }
+  }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    setIsLoggedIn(false);
+    setBillCount(0);
     setMenuOpen(false);
-    navigate('/login');
+    navigate('/');
+  };
+
+  const handleBrandClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isLoggedIn) {
+      if (billCount > 0) {
+        navigate('/dashboard');
+      } else {
+        navigate('/upload');
+      }
+    } else {
+      navigate('/');
+    }
   };
 
   return (
     <nav className="navbar-root">
       <div className="navbar-content">
-        <Link
-          to={loggedIn ? "/dashboard" : "/"}
+        <a
+          href="/"
+          onClick={handleBrandClick}
           className="navbar-brand"
           style={{ textDecoration: 'none', color: '#fff' }}
         >
           <AnalyticsIcon />
           <span>Spendlytic</span>
-        </Link>
+        </a>
         <button
           className="navbar-menu-btn"
           aria-label="Open menu"
@@ -44,23 +72,19 @@ const Navbar: React.FC = () => {
           <span className="navbar-menu-icon" />
         </button>
         <div className={`navbar-links${menuOpen ? ' open' : ''}`}>
-          {!loggedIn && location.pathname !== '/login' && (
-            <Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
-          )}
-          {!loggedIn && location.pathname !== '/register' && (
-            <Link to="/register" onClick={() => setMenuOpen(false)}>Sign Up</Link>
-          )}
-          {loggedIn && (
+          {!isLoggedIn && (
             <>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              <Link to="/upload" onClick={() => setMenuOpen(false)}>Upload</Link>
-              <button
-                onClick={handleLogout}
-                className="navbar-link-btn"
-                style={{ background: 'none', border: 'none', color: '#fff', fontWeight: 500, cursor: 'pointer', fontSize: '1rem', padding: 0, textDecoration: 'none' }}
-              >
-                Logout
-              </button>
+              <Link to="/login" onClick={() => setMenuOpen(false)} className="navbar-link-btn">Login</Link>
+              <Link to="/register" onClick={() => setMenuOpen(false)} className="navbar-link-btn">Sign Up</Link>
+            </>
+          )}
+          {isLoggedIn && (
+            <>
+              {billCount > 0 && (
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="navbar-link-btn">Dashboard</Link>
+              )}
+              <Link to="/upload" onClick={() => setMenuOpen(false)} className="navbar-link-btn">Upload</Link>
+              <button onClick={handleLogout} className="navbar-link-btn">Logout</button>
             </>
           )}
         </div>

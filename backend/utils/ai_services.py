@@ -94,6 +94,8 @@ class AIServices:
     "    - name: Name or description of the item (e.g., 'Basmati Rice', 'Latte')\n"
     "    - quantity: Number of units purchased\n"
     "    - price: Price per unit (not total price for quantity)\n\n"
+    "Make sure match the total price of the items to the total amount of the transaction.\n"
+    "Double check the quantity and price of the items to make sure they are correct.\n"
     "Ensure that you extract accurate values from the input. If something is missing or unclear, make a best guess based on typical receipts.\n\n"
     f"{self.parser.get_format_instructions()}"},
                 {"role": "user", "content": text}

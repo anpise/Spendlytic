@@ -40,6 +40,17 @@ UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
 MAX_CONTENT_LENGTH = os.getenv('MAX_CONTENT_LENGTH', '16777216')  # 16MB
 ALLOWED_EXTENSIONS = os.getenv('ALLOWED_EXTENSIONS', 'pdf,png,jpg,jpeg')
 
+# Rate limiting settings
+RATELIMIT_DEFAULT = os.getenv('RATELIMIT_DEFAULT', '100/hour')  # Default rate limit
+RATELIMIT_STORAGE_URL = os.getenv('RATELIMIT_STORAGE_URL', 'memory://')
+RATELIMIT_STRATEGY = os.getenv('RATELIMIT_STRATEGY', 'fixed-window')
+
+# Upload restrictions
+MAX_TOTAL_UPLOADS = int(os.getenv('MAX_TOTAL_UPLOADS', '20'))  # Maximum total uploads per user
+MAX_UPLOADS_PER_DAY = int(os.getenv('MAX_UPLOADS_PER_DAY', '5'))  # Maximum uploads per day
+MAX_TOTAL_SIZE_PER_DAY = int(os.getenv('MAX_TOTAL_SIZE_PER_DAY', '104857600'))  # 100MB per day
+MAX_FILE_SIZE = int(os.getenv('MAX_FILE_SIZE', '16777216'))  # 16MB per file
+
 # JWT settings
 JWT_ACCESS_TOKEN_EXPIRES = os.getenv('JWT_ACCESS_TOKEN_EXPIRES', '30')
 
