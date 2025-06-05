@@ -20,7 +20,7 @@ class Upload(db.Model):
         self.file_size = file_size
     
     @staticmethod
-    def get_user_upload_count(db, user_id: int, time_window: int = 24) -> int:
+    def get_user_upload_count(user_id: int, time_window: int = 24) -> int:
         """
         Get the number of uploads for a user in the last time_window hours
         """
@@ -31,7 +31,7 @@ class Upload(db.Model):
         ).count()
     
     @staticmethod
-    def get_user_total_uploads(db, user_id: int) -> int:
+    def get_user_total_uploads(user_id: int) -> int:
         """
         Get the total number of uploads for a user
         """
@@ -40,7 +40,7 @@ class Upload(db.Model):
         ).count()
     
     @staticmethod
-    def get_user_total_size(db, user_id: int, time_window: int = 24) -> int:
+    def get_user_total_size(user_id: int, time_window: int = 24) -> int:
         """
         Get the total size of uploads for a user in the last time_window hours
         """

@@ -2,14 +2,14 @@ from flask import Blueprint, request, jsonify, current_app
 from models.user import User, db
 from utils.auth import generate_token, refresh_token, token_required
 from utils.logger import get_logger
+from config import *
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from config import JWT_ACCESS_TOKEN_EXPIRES
 
 logger = get_logger(__name__)
 auth_bp = Blueprint('auth', __name__, url_prefix='/api')
 
-# You may want to initialize limiter in app.py and pass it here if needed
+# Use the limiter from the main app
 limiter = Limiter(key_func=get_remote_address)
 
 @auth_bp.route('/register', methods=['POST'])
@@ -88,12 +88,25 @@ def login():
 @token_required
 def refresh(current_user):
     try:
-        token = refresh_token(current_user.id, int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES']))
-        if not token:
-            logger.error("Failed to refresh token")
-            return jsonify({'message': 'Failed to refresh authentication token.'}), 500
-        logger.info(f"Token refreshed for user: {current_user.username}")
-        return jsonify({'token': token}), 200
+        logger.info(f"Token refresh requested by user {current_user.id}")
+        # Get current token from header
+        auth_header = request.headers.get('Authorization')
+        current_token = auth_header.split(" ")[1]
+        
+        # Generate new token
+        new_token = refresh_token(current_token, current_app.config['JWT_ACCESS_TOKEN_EXPIRES'])
+        
+        if new_token:
+            logger.info(f"Token refreshed successfully for user {current_user.id}")
+            return jsonify({
+                'message': 'Token refreshed successfully',
+                'token': new_token,
+                'token_expires_in_minutes': current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
+            }), 200
+        else:
+            logger.info(f"Invalid token refresh attempt by user {current_user.id}")
+            return jsonify({'message': 'Invalid token'}), 401
+
     except Exception as e:
-        logger.error(f"Token refresh error: {str(e)}")
+        logger.error(f"Token refresh error for user {current_user.id}: {str(e)}")
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500 

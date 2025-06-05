@@ -49,15 +49,13 @@ class Bill(db.Model):
         db.session.refresh(bill)
         return bill
 
-    @staticmethod
-    def get_bill(db, bill_id: int) -> 'Bill':
+    def get_bill(bill_id: int) -> 'Bill':
         """
         Get a bill by ID
         """
         return db.session.query(Bill).filter(Bill.id == bill_id).first()
 
-    @staticmethod
-    def get_user_bills(db, user_id: int) -> List['Bill']:
+    def get_user_bills(user_id: int) -> List['Bill']:
         """
         Get all bills for a user
         """
@@ -68,7 +66,7 @@ class Bill(db.Model):
         """
         Update a bill
         """
-        bill = Bill.get_bill(db, bill_id)
+        bill = Bill.get_bill(bill_id)
         if bill:
             for key, value in kwargs.items():
                 setattr(bill, key, value)
@@ -81,7 +79,7 @@ class Bill(db.Model):
         """
         Delete a bill
         """
-        bill = Bill.get_bill(db, bill_id)
+        bill = Bill.get_bill(bill_id)
         if bill:
             db.session.delete(bill)
             db.session.commit()
