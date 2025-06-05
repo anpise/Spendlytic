@@ -36,7 +36,7 @@ const Navbar: React.FC = () => {
     setIsLoggedIn(false);
     setBillCount(0);
     setMenuOpen(false);
-    navigate('/');
+    navigate('/login');
   };
 
   const handleBrandClick = (e: React.MouseEvent) => {

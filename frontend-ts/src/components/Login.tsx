@@ -25,7 +25,7 @@ const Login: React.FC = () => {
         try {
           const billsRes = await fetchBills();
           const bills = billsRes.data.bills || [];
-          setTimeout(() => {
+        setTimeout(() => {
             setShowLoader(false);
             if (bills.length > 0) {
               navigate('/dashboard');
