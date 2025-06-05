@@ -18,25 +18,13 @@ const Login: React.FC = () => {
       const res = await loginUser(form);
       localStorage.setItem('token', res.data.token);
       setShowToast(true);
-      setTimeout(async () => {
+      setTimeout(() => {
         setShowToast(false);
         setShowLoader(true);
-        // Fetch bills after login
-        try {
-          const billsRes = await fetchBills();
-          const bills = billsRes.data.bills || [];
         setTimeout(() => {
-            setShowLoader(false);
-            if (bills.length > 0) {
-              navigate('/dashboard');
-            } else {
-              navigate('/upload');
-            }
-          }, 1200);
-        } catch {
           setShowLoader(false);
-          navigate('/upload');
-        }
+          navigate('/dashboard');
+        }, 1200);
       }, 1800);
     } catch (err: any) {
       let msg = 'Invalid credentials';

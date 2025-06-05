@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { fetchBills } from '../services/api';
 
 interface BillItem {
   id: number;
@@ -46,34 +47,30 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchBills = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await fetch('/api/bills', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token') || ''}`
+    setLoading(true);
+    setError('');
+    fetchBills()
+      .then(res => {
+        if (res.data && Array.isArray(res.data.bills)) {
+          setBills(res.data.bills as Bill[]);
+          // Dispatch a custom event to update bill count in Navbar
+          window.dispatchEvent(new CustomEvent('updateBillCount', { detail: (res.data.bills as Bill[]).length }));
+          if ((res.data.bills as Bill[]).length === 0) {
+            navigate('/upload');
           }
-        });
-        if (res.status === 401) {
-          localStorage.removeItem('token');
-          navigate('/login');
-          return;
-        }
-        if (res.ok) {
-          const data = await res.json();
-          setBills(data.bills || []);
         } else {
-          const data = await res.json();
-          setError(data.message || 'Failed to fetch bills');
+          setBills([]);
+          window.dispatchEvent(new CustomEvent('updateBillCount', { detail: 0 }));
+          navigate('/upload');
         }
-      } catch (err) {
+      })
+      .catch(err => {
+        setBills([]);
         setError('Failed to fetch bills');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchBills();
+        window.dispatchEvent(new CustomEvent('updateBillCount', { detail: 0 }));
+        navigate('/upload');
+      })
+      .finally(() => setLoading(false));
   }, [navigate]);
 
   const toggleExpand = (id: number) => {
@@ -263,7 +260,7 @@ const Dashboard: React.FC = () => {
             word-break: break-word;
           }
           .bill-item-meta {
-            color: #3b82f6;
+            color: #7dd3fc;
             font-size: 1.04rem;
             font-family: 'Inter', 'Montserrat', Arial, sans-serif;
             font-weight: 600;

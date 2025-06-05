@@ -23,7 +23,7 @@ const App: React.FC = () => {
     };
 
     checkHealth();
-    const interval = setInterval(checkHealth, 10000); // Check every 10 seconds
+    const interval = setInterval(checkHealth, 60000); // Check every 60 seconds
 
     return () => clearInterval(interval);
   }, []);

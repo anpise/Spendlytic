@@ -35,18 +35,21 @@ interface RegisterData {
   password: string;
 }
 
-interface Bill {
-  id: string;
-  merchant_name: string;
-  date: string;
-  total_amount: number;
+interface BillItem {
+  id: number;
+  description: string;
+  price: string;
+  quantity: number;
+  category?: string;
 }
 
-interface BillItem {
-  id: string;
-  description: string;
-  quantity: number;
-  price: number;
+interface Bill {
+  id: number;
+  merchant_name: string;
+  total_amount: string;
+  date: string;
+  created_at: string;
+  items: BillItem[];
 }
 
 export const loginUser = (data: LoginData) => API.post('/login', data);

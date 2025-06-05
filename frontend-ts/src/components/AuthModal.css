@@ -87,8 +87,8 @@
 
 .navbar-root {
   width: 100%;
-  background: linear-gradient(90deg, #1e3357 0%, #3b82f6 100%);
-  color: #f3e8ff;
+  background: linear-gradient(90deg, #1e3357 0%, #3b82f6 100%) !important;
+  color: #f3e8ff !important;
   position: fixed;
   top: 0;
   left: 0;

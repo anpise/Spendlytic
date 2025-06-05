@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { fetchBills } from '../services/api';
-import './AuthModal.css'; // For z-index and background consistency
+import './AuthModal.css'; 
 
 const AnalyticsIcon = () => (
   <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,13 +21,14 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
-    if (token) {
-      fetchBills().then(res => {
-        setBillCount(res.data.bills.length);
-      }).catch(() => setBillCount(0));
-    } else {
-      setBillCount(0);
-    }
+    // Listen for bill count updates from Dashboard
+    const handleUpdateBillCount = (e: CustomEvent) => {
+      setBillCount(e.detail);
+    };
+    window.addEventListener('updateBillCount', handleUpdateBillCount as EventListener);
+    return () => {
+      window.removeEventListener('updateBillCount', handleUpdateBillCount as EventListener);
+    };
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
           href="/"
           onClick={handleBrandClick}
           className="navbar-brand"
-          style={{ textDecoration: 'none', color: '#fff' }}
+          style={{ textDecoration: 'none' }}
         >
           <AnalyticsIcon />
           <span>Spendlytic</span>
