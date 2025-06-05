@@ -14,8 +14,8 @@ API.interceptors.response.use(
   response => response,
   error => {
     if (error.response) {
-      // Handle token expiration
-      if (error.response.status === 401) {
+      // Only redirect if token exists (user is logged in)
+      if (error.response.status === 401 && localStorage.getItem('token')) {
         localStorage.removeItem('token');
         window.location.href = '/';
       }

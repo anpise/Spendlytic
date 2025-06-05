@@ -14,6 +14,8 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
+import re
+from sqlalchemy.exc import IntegrityError
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):
@@ -105,20 +107,29 @@ def register():
     logger.info("Registering new user")
     try:
         data = request.get_json()
+        if not data:
+            logger.info("Registration failed: malformed JSON or no data")
+            return jsonify({'message': 'Malformed request. Please send valid JSON.'}), 400
 
         # Check if required fields are present
         if not all(k in data for k in ['username', 'email', 'password']):
             logger.info("Registration failed: missing required fields")
-            return jsonify({'message': 'Missing required fields'}), 400
+            return jsonify({'message': 'Username, email, and password are required.'}), 400
+
+
+        # (Optional) Enforce password strength
+        if len(data['password']) < 6:
+            logger.info("Registration failed: password too short")
+            return jsonify({'message': 'Password must be at least 6 characters long.'}), 400
 
         # Check if user already exists
         if User.query.filter_by(username=data['username']).first():
             logger.info(f"Registration failed: username {data['username']} already exists")
-            return jsonify({'message': 'Username already exists'}), 400
+            return jsonify({'message': 'Username already exists.'}), 409
 
         if User.query.filter_by(email=data['email']).first():
             logger.info(f"Registration failed: email {data['email']} already exists")
-            return jsonify({'message': 'Email already exists'}), 400
+            return jsonify({'message': 'Email already exists.'}), 409
 
         # Create new user
         new_user = User(
@@ -134,7 +145,7 @@ def register():
         return jsonify({
             'message': 'User registered successfully',
             'user': new_user.to_dict()
-        }), 200
+        }), 201
 
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
@@ -145,27 +156,36 @@ def register():
 def login():
     try:
         data = request.get_json()
+        if not data:
+            logger.info("Login failed: malformed JSON or no data")
+            return jsonify({'message': 'Malformed request. Please send valid JSON.'}), 400
 
         if not all(k in data for k in ['username', 'password']):
             logger.info("Login failed: missing username or password")
-            return jsonify({'message': 'Missing username or password'}), 400
+            return jsonify({'message': 'Username and password are required.'}), 400
 
-        # Try to find user by username or email
         user = User.query.filter(
             (User.username == data['username']) | 
             (User.email == data['username'])
         ).first()
 
-        if not user or not user.check_password(data['password']):
-            logger.info(f"Login failed for username/email: {data['username']}")
-            return jsonify({'message': 'Invalid username/email or password'}), 400
+        if not user:
+            logger.info(f"Login failed: user not found for {data['username']}")
+            return jsonify({'message': 'No account found with that username or email.'}), 404
 
-        # Generate token with expiration
+        if not user.check_password(data['password']):
+            logger.info(f"Login failed: incorrect password for {data['username']}")
+            return jsonify({'message': 'Incorrect password.'}), 401
+
+        # (Optional) If you have an 'is_active' field:
+        # if not user.is_active:
+        #     logger.info(f"Login failed: inactive account for {data['username']}")
+        #     return jsonify({'message': 'Account is inactive. Please contact support.'}), 403
+
         token = generate_token(user.id, int(app.config['JWT_ACCESS_TOKEN_EXPIRES']))
-
         if not token:
             logger.error("Failed to generate token during login")
-            return jsonify({'message': 'Failed to generate token'}), 500
+            return jsonify({'message': 'Failed to generate authentication token.'}), 500
 
         logger.info(f"User logged in successfully: {data['username']}")
         return jsonify({
@@ -246,10 +266,8 @@ def upload_file(current_user):
 
             try:
                 data_extractor = DataExtractor()
-
                 # Extract data from the image
                 result = data_extractor.extract_text_from_file(file_path)
-                
                 # Upload the image to S3 after extraction
                 data_extractor.upload_image_to_s3(
                     file_path,
@@ -257,14 +275,15 @@ def upload_file(current_user):
                     user_id=current_user.id,
                     content_type=file.content_type
                 )
-                
                 logger.info(f"Image uploaded to S3 for user {current_user.id}: {filename}")
-                
                 # Save the extracted data to database
-                bill = User.save_extracted_data(db, current_user.id, result['analysis'])
-                
+                try:
+                    bill = User.save_extracted_data(db, current_user.id, result['analysis'])
+                except IntegrityError as ie:
+                    db.session.rollback()
+                    logger.error(f"Duplicate bill detected for user {current_user.id}: {str(ie)}")
+                    return jsonify({'message': 'Duplicate bill not allowed. This bill already exists. Please upload a different bill.'}), 409
                 logger.info(f"Extracted data saved to DB for user {current_user.id}, bill id: {bill.id}")
-
                 # Create upload record only after successful bill creation
                 upload = Upload(
                     user_id=current_user.id,
@@ -273,22 +292,18 @@ def upload_file(current_user):
                 )
                 db.session.add(upload)
                 db.session.commit()
-                
                 logger.info(f"Upload record created for user {current_user.id}: {filename}")
-                
                 return jsonify({
                     'message': 'File uploaded and processed successfully',
                     'filename': filename,
                     'data': bill.to_dict()
                 }), 200
-
             except Exception as e:
                 logger.error(f"Error processing file for user {current_user.id}: {str(e)}")
                 return jsonify({
                     'message': 'Error processing file',
                     'error': str(e)
                 }), 500
-
             finally:
                 # Clean up the file
                 if os.path.exists(file_path):

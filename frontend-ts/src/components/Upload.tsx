@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Auth.css';
+import { uploadReceipt } from '../services/api';
 
 const Upload: React.FC = () => {
   const fileInput = useRef<HTMLInputElement | null>(null);
@@ -22,27 +23,18 @@ const Upload: React.FC = () => {
     }
     setIsUploading(true);
     setStatus('Uploading...');
-    const formData = new FormData();
-    formData.append('file', fileInput.current.files[0]);
     try {
-      const res = await fetch('http://localhost:5000/api/upload', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: formData,
-      });
-      if (res.ok) {
-        setStatus('Upload successful!');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1200);
-      } else {
-        const data = await res.json();
-        setStatus(data.message || 'Upload failed');
+      const res = await uploadReceipt(fileInput.current.files[0]);
+      setStatus('Upload successful!');
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1200);
+    } catch (err: any) {
+      let msg = 'Upload failed. Please try again.';
+      if (err.response && err.response.data && err.response.data.message) {
+        msg = err.response.data.message;
       }
-    } catch (err) {
-      setStatus('Upload failed. Please try again.');
+      setStatus(msg);
     } finally {
       setIsUploading(false);
     }

@@ -38,8 +38,12 @@ const Login: React.FC = () => {
           navigate('/upload');
         }
       }, 1800);
-    } catch (err) {
-      setError('Invalid credentials');
+    } catch (err: any) {
+      let msg = 'Invalid credentials';
+      if (err.response && err.response.data && err.response.data.message) {
+        msg = err.response.data.message;
+      }
+      setError(msg);
     }
   };
 
