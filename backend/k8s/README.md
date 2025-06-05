@@ -1,42 +1,85 @@
-# Kubernetes Deployment Guide
+# Kubernetes & Autoscaling Deployment Guide
 
-This guide provides commands for deploying and managing the Spendlytic backend on Kubernetes using minikube.
+This guide explains how to deploy and manage the Spendlytic backend on Kubernetes, including autoscaling with the Horizontal Pod Autoscaler (HPA).
 
-See the [backend README](../README.md) for backend setup and the [project root README](../../README.md) for an overview of the Spendlytic project.
+## Directory Overview
+
+- `deployment.yaml`: Main backend Deployment manifest
+- `service.yaml`: Service manifest for backend exposure
+- `secrets.yaml`: Kubernetes secrets for environment variables
+- `hpa.yaml`: Horizontal Pod Autoscaler (HPA) for dynamic scaling
+- `prometheus-deployment.yaml`, `prometheus-config.yaml`, `prometheus-service.yaml`: Prometheus monitoring setup
+- `spendlytic-pod.yaml`, `spendlytic-service.yaml`: Example pod/service manifests
+- `deploy-all.sh`: Script to deploy all resources
 
 ## Prerequisites
-- minikube installed
-- Docker installed
-- kubectl installed
+- minikube or a Kubernetes cluster
+- Docker
+- kubectl
+- (Optional) Metrics server for HPA: install with `kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml`
 
-## Setup and Deployment
+## Deployment Steps
 
-1. Start minikube:
+1. **Start minikube:**
+   ```bash
+   minikube start
+   ```
+2. **Build and load Docker image:**
+   ```bash
+   docker build -t spendlytic-backend:latest ../../backend
+   minikube image load spendlytic-backend:latest
+   ```
+3. **Apply Kubernetes manifests:**
+   ```bash
+   kubectl apply -f secrets.yaml
+   kubectl apply -f deployment.yaml
+   kubectl apply -f service.yaml
+   ```
+4. **(Optional) Deploy Prometheus for monitoring:**
+   ```bash
+   kubectl apply -f prometheus-config.yaml
+   kubectl apply -f prometheus-deployment.yaml
+   kubectl apply -f prometheus-service.yaml
+   ```
+5. **Apply the HPA (Horizontal Pod Autoscaler):**
+   ```bash
+   kubectl apply -f hpa.yaml
+   ```
+   This will enable autoscaling of the backend pods based on CPU and memory utilization.
+
+## HPA (Horizontal Pod Autoscaler) Details
+
+- **File:** `hpa.yaml`
+- **What it does:**
+  - Automatically scales the number of backend pods between 1 and 6 based on CPU and memory usage.
+  - Target utilization is set to 70% for both CPU and memory.
+  - Includes stabilization windows and scaling policies for smooth scaling.
+- **Requirements:**
+  - The Kubernetes metrics server must be running for HPA to function.
+- **Monitoring HPA:**
+   ```bash
+   kubectl get hpa
+   kubectl describe hpa spendlytic-backend-hpa
+   kubectl top pods
+   ```
+- **Troubleshooting:**
+  - If HPA does not scale, ensure the metrics server is installed and running.
+  - Check pod resource requests/limits are set in `deployment.yaml`.
+  - Use `kubectl describe hpa` for detailed status and events.
+
+## Cleanup
+
+To remove all resources:
 ```bash
-minikube start
+kubectl delete -f .
 ```
 
-2. Build Docker image:
-```bash
-docker build -t spendlytic-backend:latest ./backend
-```
+## Best Practices
+- Always set resource requests and limits for your containers.
+- Monitor autoscaling behavior under load.
+- Tune HPA parameters as needed for your workload.
 
-3. Load image into minikube:
-```bash
-minikube image load spendlytic-backend:latest
-```
-
-4. Apply Kubernetes manifests:
-```bash
-# Apply secrets
-kubectl apply -f backend/k8s/secrets.yaml
-
-# Apply deployment
-kubectl apply -f backend/k8s/deployment.yaml
-
-# Apply service
-kubectl apply -f backend/k8s/service.yaml
-```
+For more details, see the main [backend README](../README.md).
 
 ## Monitoring and Management
 
@@ -81,29 +124,6 @@ kubectl get pods -o wide
 
 # View resource usage
 kubectl top pods
-```
-
-## Cleanup
-
-1. Delete resources:
-```bash
-# Delete all resources
-kubectl delete -f backend/k8s/
-
-# Or delete specific resources
-kubectl delete deployment spendlytic-backend
-kubectl delete service spendlytic-backend-service
-kubectl delete secret spendlytic-secrets
-```
-
-2. Stop minikube:
-```bash
-minikube stop
-```
-
-3. Delete minikube cluster (fresh start):
-```bash
-minikube delete
 ```
 
 ## API Endpoints

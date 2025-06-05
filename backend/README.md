@@ -15,6 +15,28 @@ Spendlytic is a smart expense tracking and analysis application that helps users
 - **Orchestration**: Kubernetes
 - **Monitoring**: Prometheus
 
+## Backend Structure
+- **app.py**: Main Flask app, blueprint registration, and configuration
+- **routes/**: Modular Flask blueprints for API endpoints
+  - `auth.py`: Authentication endpoints (register, login, refresh-token)
+  - `upload.py`: File upload endpoint
+  - `bills.py`: Bill and item endpoints
+  - `health.py`: Health check endpoints
+- **models/**: SQLAlchemy models and Pydantic schemas
+  - `user.py`, `bill.py`, `item.py`, `upload.py`, `financial_models.py`, `__init__.py`
+- **utils/**: Utility modules
+  - `auth.py`: Token and authentication helpers
+  - `ai_services.py`: AI and OpenAI integration
+  - `data_extraction.py`: Data extraction logic
+  - `logger.py`: Centralized logging utility
+- **k8s/**: Kubernetes manifests and deployment scripts
+- **uploads/**: Uploaded files (if not using S3)
+- **config.py**: Configuration variables
+- **requirements.txt**: Python dependencies
+- **Dockerfile**: Containerization setup
+
+For all Kubernetes deployment steps, autoscaling, and monitoring instructions, see the [k8s/README.md](k8s/README.md).
+
 ## Environment Variables
 Create a `.env` file in the backend directory with the following variables:
 
@@ -104,26 +126,6 @@ docker tag spendlytic-backend your-registry/spendlytic-backend:latest
 docker push your-registry/spendlytic-backend:latest
 ```
 
-## Kubernetes Deployment with Minikube
-
-1. Start Minikube:
-```bash
-minikube start
-```
-
-2. Apply Kubernetes configurations:
-```bash
-kubectl apply -f k8s/secrets.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-```
-
-3. Check deployment status:
-```bash
-kubectl get pods
-kubectl get services
-```
-
 ## API Endpoints
 
 ### Authentication
@@ -173,30 +175,41 @@ curl -X GET http://localhost:5000/api/bills/{bill_id}/items \
 
 ### Users Table
 - id (Primary Key)
-- username (Unique)
-- email (Unique)
-- password (Hashed)
-- created_at
-- updated_at
+- username (Unique, required)
+- email (Unique, required)
+- password (Hashed, required)
+- created_at (timestamp)
+- updated_at (timestamp)
+- is_active (boolean)
 
 ### Bills Table
 - id (Primary Key)
-- user_id (Foreign Key)
-- filename
-- upload_date
-- total_amount
-- merchant_name
-- transaction_date
-- created_at
-- updated_at
+- merchant_name (required)
+- total_amount (decimal, required)
+- date (timestamp, required)
+- user_id (Foreign Key to users, required)
+- created_at (timestamp)
+- updated_at (timestamp)
 
 ### Items Table
 - id (Primary Key)
-- bill_id (Foreign Key)
-- name
-- quantity
-- unit_price
-- total_price
-- category
-- created_at
-- updated_at
+- description (required)
+- quantity (integer, required)
+- price (decimal, required)
+- bill_id (Foreign Key to bills, required)
+
+### Uploads Table
+- id (Primary Key)
+- user_id (Foreign Key to users, required)
+- filename (required)
+- upload_date (timestamp)
+- file_size (integer, required)
+- status (string: completed, failed, processing)
+
+### FinancialData (Pydantic Model for Validation)
+- merchant_name: str
+- total_amount: float
+- date: str (YYYY-MM-DD)
+- items: List[Dict[str, Any]]
+
+(See models/ for full implementation details.)
