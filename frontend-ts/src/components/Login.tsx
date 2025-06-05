@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import './Auth.css';
-import { loginUser } from '../services/api';
+import { loginUser, fetchBills } from '../services/api';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -18,13 +18,25 @@ const Login: React.FC = () => {
       const res = await loginUser(form);
       localStorage.setItem('token', res.data.token);
       setShowToast(true);
-      setTimeout(() => {
+      setTimeout(async () => {
         setShowToast(false);
         setShowLoader(true);
-        setTimeout(() => {
+        // Fetch bills after login
+        try {
+          const billsRes = await fetchBills();
+          const bills = billsRes.data.bills || [];
+          setTimeout(() => {
+            setShowLoader(false);
+            if (bills.length > 0) {
+              navigate('/dashboard');
+            } else {
+              navigate('/upload');
+            }
+          }, 1200);
+        } catch {
           setShowLoader(false);
           navigate('/upload');
-        }, 1200);
+        }
       }, 1800);
     } catch (err) {
       setError('Invalid credentials');
