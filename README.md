@@ -28,15 +28,15 @@ To ensure Spendlytic delivers a fast and reliable user experience, we conducted 
 
 The following graph shows the system latency observed during various stages of the workflow:
 
-![Latency Graph](docs/latency_graph.png)
+![Latency Graph](Docs/latency_graph.png)
 
 ### Extraction & Analytics Results
 
 The results below summarize the accuracy and effectiveness of the AI-powered extraction and analytics modules:
 
-![Extraction & Analytics Results](docs/results.png)
+![Extraction & Analytics Results](Docs/results.png)
 
-For more details, see the full experiment report in [docs/Final_ECC_Project.pdf](docs/Final_ECC_Project.pdf) and the project presentation in [docs/ECC presentation.pdf](docs/ECC presentation.pdf).
+For more details, see the full experiment report in [Docs/Final_ECC_Project.pdf](Docs/Final_ECC_Project.pdf) and the project presentation.
 
 ## Quick Start
 
