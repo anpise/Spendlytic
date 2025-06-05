@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch('http://localhost:5000/api/bills', {
+        const res = await fetch('/api/bills', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token') || ''}`
           }
