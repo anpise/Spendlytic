@@ -331,8 +331,13 @@ const Dashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#233e5c" />
                 <XAxis dataKey="label" stroke="#7dd3fc" fontSize={14} tickLine={false} axisLine={false} />
                 <YAxis stroke="#7dd3fc" fontSize={14} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`}/>
-                <Tooltip contentStyle={{ background: '#1e3357', border: 'none', borderRadius: 8, color: '#7dd3fc' }} labelStyle={{ color: '#7dd3fc' }} formatter={v => [`$${v}`, 'Total']} />
-                <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={40} label={{ position: 'top', fill: '#7dd3fc', fontWeight: 700, formatter: (v: number) => `$${v}` }} />
+                <Tooltip 
+                  contentStyle={{ background: 'rgba(35, 62, 92, 0.95)', border: 'none', borderRadius: 8, color: '#7dd3fc' }} 
+                  labelStyle={{ color: '#7dd3fc' }} 
+                  formatter={v => [`$${v}`, 'Total']} 
+                  cursor={{ fill: 'none' }}
+                />
+                <Bar dataKey="total" fill="#3b82f6" radius={[8, 8, 0, 0]} barSize={40} label={{ position: 'top', fill: '#7dd3fc', fontWeight: 700, formatter: (v: number) => `$${v}` }} activeBar={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>

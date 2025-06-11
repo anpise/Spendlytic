@@ -31,12 +31,20 @@ const Navbar: React.FC = () => {
     };
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsLoggedIn(false);
-    setBillCount(0);
-    setMenuOpen(false);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      // First navigate to login page
+      navigate('/login');
+      // Then clear all state and storage
+      localStorage.removeItem('token');
+      setIsLoggedIn(false);
+      setBillCount(0);
+      setMenuOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force reload if navigation fails
+      window.location.href = '/login';
+    }
   };
 
   const handleBrandClick = (e: React.MouseEvent) => {

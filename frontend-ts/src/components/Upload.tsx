@@ -67,29 +67,8 @@ const Upload: React.FC = () => {
       }}>
         Upload a Bill or Receipt
       </h2>
-      <label htmlFor="file-upload" style={{
-        display: 'flex',
-        alignItems: 'center',
-        width: '100%',
-        background: 'rgba(59,130,246,0.10)',
-        border: '2px solid #60a5fa',
-        borderRadius: 10,
-        padding: '0.7rem 1rem',
-        marginBottom: '1.5rem',
-        cursor: 'pointer',
-        transition: 'border 0.2s',
-        boxShadow: '0 2px 8px rgba(59,130,246,0.08)'
-      }}>
-        <span style={{
-          background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
-          color: '#fff',
-          fontWeight: 700,
-          borderRadius: 6,
-          padding: '0.5rem 1.2rem',
-          fontSize: '1rem',
-          marginRight: '1rem',
-          boxShadow: '0 1px 4px rgba(59,130,246,0.10)'
-        }}>Choose File</span>
+      <label htmlFor="file-upload" className="upload-file-label-responsive">
+        <span className="choose-file-btn">Choose File</span>
         <input
           id="file-upload"
           type="file"
@@ -98,7 +77,7 @@ const Upload: React.FC = () => {
           className="upload-file-input"
           style={{ display: 'none' }}
         />
-        <span style={{ color: '#bfdbfe', fontSize: '1.08rem', fontWeight: 500, wordBreak: 'break-all' }}>{fileName || 'No file selected'}</span>
+        <span className="upload-file-selected">{fileName || 'No file selected'}</span>
       </label>
       {fileName && (
         <div className="upload-file-name" style={{ color: '#bfdbfe', fontWeight: 600, fontSize: '1.08rem', marginBottom: '1.2rem', letterSpacing: '0.01em', textAlign: 'left', width: '100%' }}>

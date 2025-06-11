@@ -8,28 +8,42 @@ interface PrivateRouteProps {
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   const [isValid, setIsValid] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    
-    // If no token, redirect to home
-    if (!token) {
-      setIsValid(false);
-      return;
-    }
+    const validateToken = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        
+        // If no token, redirect to home
+        if (!token) {
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
 
-    // If token is expired, remove it and redirect to home
-    if (isTokenExpired(token)) {
-      localStorage.removeItem('token');
-      setIsValid(false);
-      return;
-    }
+        // If token is expired, remove it and redirect to home
+        if (isTokenExpired(token)) {
+          localStorage.removeItem('token');
+          setIsValid(false);
+          setIsLoading(false);
+          return;
+        }
 
-    setIsValid(true);
+        setIsValid(true);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Token validation error:', error);
+        setIsValid(false);
+        setIsLoading(false);
+      }
+    };
+
+    validateToken();
   }, []);
 
-  if (isValid === null) {
-    return null; // Still checking token validity
+  if (isLoading) {
+    return <div className="loading-spinner">Loading...</div>;
   }
 
   return isValid ? <>{children}</> : <Navigate to="/login" replace />;

@@ -12,7 +12,7 @@ const Maintenance: React.FC = () => {
         <div className="spinner"></div>
       </div>
       <p className="maintenance-message">
-        Please try again in a few minutes. We're working to get everything back up and running.
+        The service may take up to 30 seconds to start if it hasn't been used in a while. Thank you for your patience!
       </p>
     </div>
   );
