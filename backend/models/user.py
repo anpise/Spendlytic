@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 from . import db
 from models.bill import Bill
 from models.item import Item
+import secrets
+import string
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -25,7 +27,12 @@ class User(db.Model):
         self.set_password(password)
 
     def set_password(self, password):
-        self.password = generate_password_hash(password)
+        if password is not None:
+            self.password = generate_password_hash(password)
+        else:
+            # Generate a secure random password for OAuth users
+            random_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+            self.password = generate_password_hash(random_password)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)

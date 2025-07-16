@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import './Auth.css';
-import { loginUser, fetchBills } from '../services/api';
+import { loginUser, fetchBills, getGoogleLoginUrl } from '../services/api';
+import Google3DIcon from './Google3DIcon';
+import GoogleAuthButton from './GoogleAuthButton';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -10,6 +12,16 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
+
+  // Capture token from URL and store in localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      localStorage.setItem('token', token);
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +74,9 @@ const Login: React.FC = () => {
             required
           />
           <button className="auth-button" type="submit">Sign In</button>
+          <div style={{ marginTop: '0.2rem' }}>
+            <GoogleAuthButton label="Sign in with Google" />
+          </div>
           {error && <div className="auth-error">{error}</div>}
         </form>
         <div className="auth-link">

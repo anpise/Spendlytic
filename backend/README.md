@@ -213,3 +213,26 @@ curl -X GET http://localhost:5000/api/bills/{bill_id}/items \
 - items: List[Dict[str, Any]]
 
 (See models/ for full implementation details.)
+
+## Google OAuth Integration
+
+Spendlytic supports Google OAuth for easy and secure login and signup.
+
+### Setup Steps
+
+1. **Google Cloud Console:**
+   - Create OAuth 2.0 credentials for a Web application.
+   - Set the Authorized JavaScript origins to your frontend URL (e.g., http://localhost:3000).
+   - Set the Authorized redirect URIs to your backend callback (e.g., http://localhost:5000/api/auth/google/callback).
+   - Copy the Client ID and Client Secret.
+
+2. **Backend Configuration:**
+   - Add the following to your `.env` in the `backend/` directory:
+     ```env
+     GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+     GOOGLE_CLIENT_SECRET=your-google-client-secret
+     GOOGLE_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
+     ```
+   - Restart your backend server after updating the `.env` file.
+
+For frontend usage, see the README in `frontend-ts/`.

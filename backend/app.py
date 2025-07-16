@@ -4,19 +4,16 @@ import os
 from werkzeug.utils import secure_filename
 from models.user import User, db
 from models.upload import Upload
-from utils.auth import token_required, generate_token, refresh_token
 from config import *
 from utils.data_extraction import DataExtractor
 from utils.ai_services import AIServices
-from models.bill import Bill
-from models.item import Item
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import re
 from sqlalchemy.exc import IntegrityError
 from utils.logger import get_logger
-from routes.auth import auth_bp
+from routes.auth import auth_bp, oauth
 from routes.upload import upload_bp
 from routes.bills import bills_bp
 from routes.health import health_bp
@@ -31,6 +28,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(upload_bp)
 app.register_blueprint(bills_bp)
 app.register_blueprint(health_bp)
+oauth.init_app(app)
 
 # Initialize rate limiter
 limiter = Limiter(

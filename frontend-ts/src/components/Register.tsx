@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from './AuthModal';
 import './Auth.css';
-import { registerUser } from '../services/api';
+import { registerUser, getGoogleLoginUrl } from '../services/api';
+import Google3DIcon from './Google3DIcon';
+import GoogleAuthButton from './GoogleAuthButton';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -73,6 +75,9 @@ const Register: React.FC = () => {
             inputMode="text"
           />
           <button className="auth-button" type="submit">Sign Up</button>
+          <div style={{ marginTop: '0.2rem' }}>
+            <GoogleAuthButton label="Sign up with Google" />
+          </div>
           {error && <p className="auth-error">{error}</p>}
         </form>
         <div className="auth-link">

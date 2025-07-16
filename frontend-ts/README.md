@@ -28,9 +28,17 @@ This is the TypeScript-based frontend for the Spendlytic project. It is built us
 
 - React
 - TypeScript
-- (Add any UI libraries or other dependencies here)
 
 ## Learning Resources
 
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [React Documentation](https://reactjs.org/docs/getting-started.html) 
+- [React Documentation](https://reactjs.org/docs/getting-started.html)
+
+## Google OAuth Integration
+
+Spendlytic supports Google OAuth for easy and secure login and signup.
+
+- Users can click "Sign in with Google" or "Sign up with Google" on the login and register pages.
+- On successful authentication, users are redirected back to the app and logged in automatically.
+
+For setup instructions, see the backend README. 
