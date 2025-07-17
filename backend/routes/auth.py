@@ -156,5 +156,5 @@ def google_callback():
     # Issue JWT token
     jwt_token = generate_token(user.id, int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES']))
     # Redirect to frontend with token as query param
-    frontend_url = 'http://localhost:3000/login'  # Change to prod URL as needed
-    return redirect(f"{frontend_url}/?token={jwt_token}") 
+    frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000')
+    return redirect(f"{frontend_url}/login?token={jwt_token}") 
