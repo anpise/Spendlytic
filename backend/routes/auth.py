@@ -133,7 +133,13 @@ def refresh(current_user):
 def google_login():
     nonce = secrets.token_urlsafe(16)
     session['nonce'] = nonce
+    env = current_app.config.get('ENV').lower()
+    if env in ['prod']:
+        protocol = 'https'
+    else:
+        protocol = 'http'
     redirect_uri = url_for('auth.google_callback', _external=True)
+    redirect_uri = protocol + '://' + redirect_uri.split('://', 1)[1]
     return google.authorize_redirect(redirect_uri, nonce=nonce)
 
 @auth_bp.route('/auth/google/callback')
@@ -156,5 +162,5 @@ def google_callback():
     # Issue JWT token
     jwt_token = generate_token(user.id, int(current_app.config['JWT_ACCESS_TOKEN_EXPIRES']))
     # Redirect to frontend with token as query param
-    frontend_url = 'http://localhost:3000/login'  # Change to prod URL as needed
-    return redirect(f"{frontend_url}/?token={jwt_token}") 
+    frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:3000')
+    return redirect(f"{frontend_url}/login?token={jwt_token}") 

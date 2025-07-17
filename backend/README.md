@@ -64,6 +64,12 @@ AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 AWS_REGION=us-east-1
 S3_BUCKET_NAME=spendlytic
+
+# Google OAuth settings
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
+FRONTEND_URL=http://localhost:3000
 ```
 
 Note: The application will:
@@ -232,6 +238,7 @@ Spendlytic supports Google OAuth for easy and secure login and signup.
      GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
      GOOGLE_CLIENT_SECRET=your-google-client-secret
      GOOGLE_DISCOVERY_URL=https://accounts.google.com/.well-known/openid-configuration
+     FRONTEND_URL=http://localhost:3000
      ```
    - Restart your backend server after updating the `.env` file.
 
