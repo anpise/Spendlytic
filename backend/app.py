@@ -51,6 +51,7 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = JWT_ACCESS_TOKEN_EXPIRES
 app.config['FRONTEND_URL'] = FRONTEND_URL
 app.config['ENV'] = ENV
 
+
 # Initialize database with app
 db.init_app(app)
 
