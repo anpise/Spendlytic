@@ -33,13 +33,12 @@ const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      // First navigate to login page
-      navigate('/login');
-      // Then clear all state and storage
+      // Remove token and clear state before navigating
       localStorage.removeItem('token');
       setIsLoggedIn(false);
       setBillCount(0);
       setMenuOpen(false);
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
       // Force reload if navigation fails

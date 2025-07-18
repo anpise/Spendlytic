@@ -74,3 +74,6 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 # Environment
 ENV = os.getenv('ENV', 'dev')
 
+# Redis URL
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+

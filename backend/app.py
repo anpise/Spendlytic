@@ -17,6 +17,8 @@ from routes.auth import auth_bp, oauth
 from routes.upload import upload_bp
 from routes.bills import bills_bp
 from routes.health import health_bp
+from flask_caching import Cache
+import redis
 
 logger = get_logger(__name__)
 
@@ -72,6 +74,15 @@ with app.app_context():
         print("Database tables created successfully")
     except Exception as e:
         print(f"Error creating database tables: {str(e)}")
+
+cache = Cache(config={
+    'CACHE_TYPE': 'RedisCache',
+    'CACHE_REDIS_URL': REDIS_URL
+})
+cache.init_app(app)
+
+redis_client = redis.Redis.from_url(REDIS_URL)
+app.redis_client = redis_client
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS'].split(',')

@@ -3,6 +3,7 @@ import jwt
 from functools import wraps
 from flask import jsonify, request, current_app
 from models.user import User
+from utils.logger import get_logger
 
 def generate_token(user_id, expires_in_minutes):
     try:
@@ -28,6 +29,7 @@ def generate_token(user_id, expires_in_minutes):
         return None
 
 def token_required(f):
+    logger = get_logger("auth")
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
@@ -38,9 +40,11 @@ def token_required(f):
             try:
                 token = auth_header.split(" ")[1]
             except:
+                logger.warning('Invalid token format')
                 return jsonify({'message': 'Invalid token format'}), 401
         
         if not token:
+            logger.warning('Token is missing')
             return jsonify({'message': 'Token is missing'}), 401
         
         try:
@@ -54,15 +58,19 @@ def token_required(f):
             # Get user from database
             current_user = User.query.get(payload['user_id'])
             if not current_user:
+                logger.warning('User not found for token')
                 return jsonify({'message': 'User not found'}), 401
-            
+            logger.info(f'Authenticated user {current_user.id}')
             return f(current_user, *args, **kwargs)
             
         except jwt.ExpiredSignatureError:
+            logger.warning('Token has expired')
             return jsonify({'message': 'Token has expired'}), 401
         except jwt.InvalidTokenError:
+            logger.warning('Invalid token')
             return jsonify({'message': 'Invalid token'}), 401
         except Exception as e:
+            logger.error(f'Internal server error: {str(e)}')
             return jsonify({'message': 'Internal server error', 'error': str(e)}), 500
 
     return decorated

@@ -12,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+
 logger = get_logger(__name__)
 upload_bp = Blueprint('upload', __name__, url_prefix='/api')
 
@@ -106,6 +107,9 @@ def upload_file(current_user):
                     logger.error(f"Duplicate bill detected for user {current_user.id}: {str(ie)}")
                     return jsonify({'message': 'Duplicate bill not allowed. This bill already exists. Please upload a different bill.'}), 409
                 logger.info(f"Extracted data saved to DB for user {current_user.id}, bill id: {bill.id}")
+                # Invalidate bills cache for this user
+                cache_key = f"user_bills_{current_user.id}"
+                current_app.redis_client.delete(cache_key)
                 # Create upload record only after successful bill creation
                 upload = Upload(
                     user_id=current_user.id,
