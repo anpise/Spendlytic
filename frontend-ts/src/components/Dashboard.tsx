@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { fetchBills } from '../services/api';
+import { fetchBills, deleteBill } from '../services/api';
 
 interface BillItem {
   id: number;
@@ -44,6 +44,18 @@ const Dashboard: React.FC = () => {
   const [expandedBillId, setExpandedBillId] = useState<number | null>(null);
   const [filter, setFilter] = useState<'yearly' | 'monthly' | 'weekly'>('monthly');
   const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; billId: number | null; merchantName: string; date: string; amount: string }>({
+    show: false,
+    billId: null,
+    merchantName: '',
+    date: '',
+    amount: ''
+  });
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -75,6 +87,50 @@ const Dashboard: React.FC = () => {
 
   const toggleExpand = (id: number) => {
     setExpandedBillId(expandedBillId === id ? null : id);
+  };
+
+  const handleDeleteBill = (billId: number, merchantName: string, date: string, amount: string) => {
+    setDeleteModal({
+      show: true,
+      billId,
+      merchantName,
+      date,
+      amount
+    });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.billId) return;
+    
+    try {
+      await deleteBill(deleteModal.billId);
+      // Remove the bill from the local state
+      setBills(prevBills => prevBills.filter(bill => bill.id !== deleteModal.billId));
+      // Update bill count
+      window.dispatchEvent(new CustomEvent('updateBillCount', { detail: bills.length - 1 }));
+      // If no bills left, redirect to upload
+      if (bills.length - 1 === 0) {
+        navigate('/upload');
+      }
+      // Close modal
+      setDeleteModal({ show: false, billId: null, merchantName: '', date: '', amount: '' });
+      setToast({ show: true, message: `Bill deleted successfully!`, type: 'success' });
+      // Auto-hide toast after 3 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, show: false }));
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to delete bill:', error);
+      setToast({ show: true, message: 'Failed to delete bill. Please try again.', type: 'error' });
+      // Auto-hide error toast after 4 seconds
+      setTimeout(() => {
+        setToast(prev => ({ ...prev, show: false }));
+      }, 4000);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModal({ show: false, billId: null, merchantName: '', date: '', amount: '' });
   };
 
   // --- Analytics Data Aggregation ---
@@ -352,26 +408,59 @@ const Dashboard: React.FC = () => {
                   <th style={{ padding: '0.7rem', textAlign: 'left', color: '#3b82f6', fontWeight: 700 }}>Amount</th>
                   <th style={{ padding: '0.7rem', textAlign: 'left', color: '#3b82f6', fontWeight: 700 }}>Transaction Date</th>
                   <th style={{ padding: '0.7rem', textAlign: 'left', color: '#3b82f6', fontWeight: 700 }}>Uploaded</th>
+                  <th style={{ padding: '0.7rem', textAlign: 'center', color: '#3b82f6', fontWeight: 700, width: 80 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {bills.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', color: '#b6baff', padding: '1.5rem' }}>No bills found.</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', color: '#b6baff', padding: '1.5rem' }}>No bills found.</td></tr>
                 )}
                 {bills.map(bill => (
                   <React.Fragment key={bill.id}>
-                    <tr className="bill-row" onClick={() => toggleExpand(bill.id)} style={{ borderBottom: '1px solid #233e5c', cursor: 'pointer' }}>
-                      <td style={{ padding: '0.7rem', width: 40 }}>
+                    <tr className="bill-row" style={{ borderBottom: '1px solid #233e5c' }}>
+                      <td style={{ padding: '0.7rem', width: 40, cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>
                         <span className={`dropdown-arrow${expandedBillId === bill.id ? ' expanded' : ''}`}>▶</span>
                       </td>
-                      <td style={{ padding: '0.7rem', fontWeight: 500 }}>{bill.merchant_name}</td>
-                      <td style={{ padding: '0.7rem' }}>${bill.total_amount}</td>
-                      <td style={{ padding: '0.7rem' }}>{bill.date ? formatPrettyDate(bill.date) : 'N/A'}</td>
-                      <td style={{ padding: '0.7rem' }}>{bill.created_at ? formatPrettyDate(bill.created_at) : 'N/A'}</td>
+                      <td style={{ padding: '0.7rem', fontWeight: 500, cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>{bill.merchant_name}</td>
+                      <td style={{ padding: '0.7rem', cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>${bill.total_amount}</td>
+                      <td style={{ padding: '0.7rem', cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>{bill.date ? formatPrettyDate(bill.date) : 'N/A'}</td>
+                      <td style={{ padding: '0.7rem', cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>{bill.created_at ? formatPrettyDate(bill.created_at) : 'N/A'}</td>
+                      <td style={{ padding: '0.7rem', textAlign: 'center' }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteBill(bill.id, bill.merchant_name, bill.date || 'N/A', bill.total_amount);
+                          }}
+                          style={{
+                            background: 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(239, 68, 68, 0.3)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(239, 68, 68, 0.2)';
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                     {expandedBillId === bill.id && bill.items && bill.items.length > 0 && (
                       <tr>
-                        <td colSpan={5} style={{ border: 'none', padding: 0 }}>
+                        <td colSpan={6} style={{ border: 'none', padding: 0 }}>
                           <div className="bill-items-card">
                             <h4>Items:</h4>
                             {bill.items.map((item) => (
@@ -398,6 +487,216 @@ const Dashboard: React.FC = () => {
         {loading && <div className="loader"><div className="loader-spinner"></div></div>}
         {error && <div className="upload-status error">{error}</div>}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '450px',
+            width: '90%',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+            border: '1px solid rgba(71, 85, 105, 0.3)',
+            animation: 'modalSlideIn 0.3s ease-out'
+          }}>
+                         <div style={{
+               textAlign: 'center',
+               marginBottom: '1.5rem'
+             }}>
+               <h3 style={{
+                 color: '#ffffff',
+                 fontSize: '1.25rem',
+                 fontWeight: '700',
+                 marginBottom: '0.5rem',
+                 fontFamily: 'Montserrat, Inter, Arial, sans-serif'
+               }}>
+                 Delete Bill
+               </h3>
+               <p style={{
+                 color: '#cbd5e1',
+                 fontSize: '1rem',
+                 lineHeight: '1.5',
+                 margin: 0
+               }}>
+                 Are you sure you want to delete this bill?
+               </p>
+              
+                             <div style={{
+                 background: 'rgba(51, 65, 85, 0.3)',
+                 borderRadius: '8px',
+                 padding: '1rem',
+                 margin: '1rem 0',
+                 border: '1px solid rgba(71, 85, 105, 0.2)'
+               }}>
+                 <div style={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                   marginBottom: '0.5rem'
+                 }}>
+                   <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Merchant:</span>
+                   <span style={{ color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '500' }}>
+                     {deleteModal.merchantName}
+                   </span>
+                 </div>
+                 <div style={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center',
+                   marginBottom: '0.5rem'
+                 }}>
+                   <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Date:</span>
+                   <span style={{ color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '500' }}>
+                     {deleteModal.date ? formatPrettyDate(deleteModal.date) : 'N/A'}
+                   </span>
+                 </div>
+                 <div style={{
+                   display: 'flex',
+                   justifyContent: 'space-between',
+                   alignItems: 'center'
+                 }}>
+                   <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>Amount:</span>
+                   <span style={{ color: '#e2e8f0', fontSize: '0.875rem', fontWeight: '500' }}>
+                     ${deleteModal.amount}
+                   </span>
+                 </div>
+               </div>
+              
+              <p style={{
+                color: '#94a3b8',
+                fontSize: '0.875rem',
+                marginTop: '0.5rem',
+                fontStyle: 'italic'
+              }}>
+                This action cannot be undone.
+              </p>
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'center'
+            }}>
+                             <button
+                 onClick={cancelDelete}
+                 style={{
+                   background: 'rgba(71, 85, 105, 0.2)',
+                   color: '#cbd5e1',
+                   border: '1px solid rgba(71, 85, 105, 0.4)',
+                   borderRadius: '8px',
+                   padding: '0.75rem 1.5rem',
+                   fontSize: '0.875rem',
+                   fontWeight: '600',
+                   cursor: 'pointer',
+                   transition: 'all 0.2s ease',
+                   minWidth: '100px'
+                 }}
+                 onMouseOver={(e) => {
+                   e.currentTarget.style.background = 'rgba(71, 85, 105, 0.3)';
+                   e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.6)';
+                   e.currentTarget.style.color = '#e2e8f0';
+                 }}
+                 onMouseOut={(e) => {
+                   e.currentTarget.style.background = 'rgba(71, 85, 105, 0.2)';
+                   e.currentTarget.style.borderColor = 'rgba(71, 85, 105, 0.4)';
+                   e.currentTarget.style.color = '#cbd5e1';
+                 }}
+               >
+                 Cancel
+               </button>
+               <button
+                 onClick={confirmDelete}
+                 style={{
+                   background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                   color: '#ffffff',
+                   border: 'none',
+                   borderRadius: '8px',
+                   padding: '0.75rem 1.5rem',
+                   fontSize: '0.875rem',
+                   fontWeight: '600',
+                   cursor: 'pointer',
+                   transition: 'all 0.2s ease',
+                   minWidth: '100px',
+                   boxShadow: '0 4px 8px rgba(220, 38, 38, 0.2)'
+                 }}
+                 onMouseOver={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)';
+                   e.currentTarget.style.transform = 'translateY(-1px)';
+                   e.currentTarget.style.boxShadow = '0 6px 12px rgba(220, 38, 38, 0.3)';
+                 }}
+                 onMouseOut={(e) => {
+                   e.currentTarget.style.background = 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)';
+                   e.currentTarget.style.transform = 'translateY(0)';
+                   e.currentTarget.style.boxShadow = '0 4px 8px rgba(220, 38, 38, 0.2)';
+                 }}
+               >
+                 Delete
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+             {/* Toast Notification */}
+       {toast.show && (
+                  <div style={{
+           position: 'fixed',
+           top: '100px',
+           right: '20px',
+           backgroundColor: toast.type === 'success' ? '#4CAF50' : '#F44336',
+           color: '#ffffff',
+           padding: '15px 25px',
+           borderRadius: '8px',
+           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+           zIndex: 10000,
+           display: 'flex',
+           alignItems: 'center',
+           gap: '10px',
+           opacity: 0.9,
+           animation: 'toastSlideIn 0.5s ease-out',
+           fontWeight: '500'
+         }}>
+           <span style={{ color: '#ffffff' }}>{toast.message}</span>
+           <button onClick={() => setToast({ ...toast, show: false })} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+         </div>
+      )}
+
+      <style>{`
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes toastSlideIn {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 0.9;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
