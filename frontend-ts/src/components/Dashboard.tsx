@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-import { fetchBills, deleteBill } from '../services/api';
+import { fetchBills, deleteBill, fetchBillPreviewUrl } from '../services/api';
 
 interface BillItem {
   id: number;
@@ -56,6 +56,7 @@ const Dashboard: React.FC = () => {
     message: '',
     type: 'success'
   });
+  const [previewModal, setPreviewModal] = useState<{ show: boolean; imageUrl: string; merchantName: string }>({ show: false, imageUrl: '', merchantName: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -132,6 +133,18 @@ const Dashboard: React.FC = () => {
   const cancelDelete = () => {
     setDeleteModal({ show: false, billId: null, merchantName: '', date: '', amount: '' });
   };
+
+  const handleViewBill = async (billId: number, merchantName: string) => {
+    try {
+      const res = await fetchBillPreviewUrl(billId);
+      setPreviewModal({ show: true, imageUrl: res.data.signed_url, merchantName });
+    } catch (error) {
+      console.error('Failed to fetch preview URL:', error);
+      setToast({ show: true, message: 'Failed to load bill preview. Please try again.', type: 'error' });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+    }
+  };
+  const closePreviewModal = () => setPreviewModal({ show: false, imageUrl: '', merchantName: '' });
 
   // --- Analytics Data Aggregation ---
   function getYearlyData() {
@@ -426,6 +439,7 @@ const Dashboard: React.FC = () => {
                       <td style={{ padding: '0.7rem', cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>{bill.date ? formatPrettyDate(bill.date) : 'N/A'}</td>
                       <td style={{ padding: '0.7rem', cursor: 'pointer' }} onClick={() => toggleExpand(bill.id)}>{bill.created_at ? formatPrettyDate(bill.created_at) : 'N/A'}</td>
                       <td style={{ padding: '0.7rem', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5rem', justifyContent: 'center' }}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -441,7 +455,8 @@ const Dashboard: React.FC = () => {
                             fontWeight: '600',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
-                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)',
+                            marginRight: '0.5rem'
                           }}
                           onMouseOver={(e) => {
                             e.currentTarget.style.background = 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)';
@@ -456,6 +471,38 @@ const Dashboard: React.FC = () => {
                         >
                           Delete
                         </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewBill(bill.id, bill.merchant_name);
+                          }}
+                          style={{
+                            background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '0.4rem 0.8rem',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.3)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.2)';
+                          }}
+                        >
+                          View
+                        </button>
+                        {/* Future button goes here */}
+                        </div>
                       </td>
                     </tr>
                     {expandedBillId === bill.id && bill.items && bill.items.length > 0 && (
@@ -673,6 +720,92 @@ const Dashboard: React.FC = () => {
            <span style={{ color: '#ffffff' }}>{toast.message}</span>
            <button onClick={() => setToast({ ...toast, show: false })} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
          </div>
+      )}
+
+      {/* Bill Preview Modal */}
+      {previewModal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: 0
+        }}>
+          <div style={{
+            background: '#1e3a8a',
+            borderRadius: '10px',
+            padding: '0.3rem 8px 0.7rem 8px',
+            maxWidth: '98vw',
+            maxHeight: '98vh',
+            overflow: 'hidden',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxSizing: 'border-box',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              margin: '0.3rem 0 0.3rem 0'
+            }}>
+              <div style={{ flex: 1, textAlign: 'center', color: '#bfdbfe', fontSize: '1.08rem', fontWeight: 600 }}>
+                {previewModal.merchantName} Bill
+              </div>
+              <button
+                onClick={closePreviewModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#ffffff',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  marginLeft: '0.5rem',
+                  lineHeight: 1
+                }}
+                aria-label="Close preview"
+              >
+                ×
+              </button>
+            </div>
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 0,
+              minWidth: 0
+            }}>
+              {previewModal.imageUrl ? (
+                <img
+                  src={previewModal.imageUrl}
+                  alt="Bill Preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '80vh',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(30,58,138,0.10)'
+                  }}
+                  onError={() => console.error('Image failed to load:', previewModal.imageUrl)}
+                />
+              ) : (
+                <p style={{ color: '#bfdbfe', textAlign: 'center' }}>Loading preview...</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`

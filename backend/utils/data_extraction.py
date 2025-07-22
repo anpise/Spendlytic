@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from config import AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
 from utils.ai_services import AIServices
 import uuid
+import datetime
 
 class DataExtractor:
     def __init__(self):
@@ -110,9 +111,10 @@ class DataExtractor:
             content_type: The MIME type of the image (default: 'image/jpeg')
             folder: The S3 folder path (default: 'uploads')
         Returns:
-            True if upload is successful, else False.
+            The S3 key if upload is successful, else None.
         """
-        unique_filename = f"{user_id}_{uuid.uuid4()}.jpg"
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_filename = f"{user_id}_{timestamp}_{uuid.uuid4()}.jpg"
         s3_key = f"{folder}/{unique_filename}"
         s3 = boto3.client('s3',
             aws_access_key_id=AWS_ACCESS_KEY_ID,
@@ -127,7 +129,36 @@ class DataExtractor:
                     Body=img_file,
                     ContentType=content_type
                 )
-            return True
+            return s3_key
         except (ClientError, Exception) as e:
             print(f"Error uploading to S3: {e}")
-            return False 
+            return None
+
+    @staticmethod
+    def generate_presigned_url(bucket_name, object_key, expiration=300):
+        """
+        Generate a presigned URL to share an S3 object
+        Args:
+            bucket_name: S3 bucket name
+            object_key: S3 object key
+            expiration: Time in seconds for the presigned URL to remain valid
+        Returns:
+            Presigned URL as string. If error, returns None.
+        """
+        # Enforce guardrail: Max 10 minutes (600 seconds) for security
+        expiration = min(expiration, 600)
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            region_name=AWS_REGION
+        )
+        try:
+            response = s3.generate_presigned_url('get_object',
+                                                Params={'Bucket': bucket_name,
+                                                        'Key': object_key},
+                                                ExpiresIn=expiration)
+        except Exception as e:
+            print(f"Error generating presigned URL: {e}")
+            return None
+        return response 

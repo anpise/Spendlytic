@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from models.upload import Upload
 from models.user import User, db
+from models.bill import Bill
 from utils.auth import token_required
 from utils.logger import get_logger
 from config import MAX_TOTAL_UPLOADS, MAX_UPLOADS_PER_DAY, MAX_TOTAL_SIZE_PER_DAY, MAX_FILE_SIZE
@@ -11,6 +12,7 @@ from utils.ai_services import AIServices
 from sqlalchemy.exc import IntegrityError
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from utils.cache_decorator import redis_cache
 
 
 logger = get_logger(__name__)
@@ -107,6 +109,20 @@ def upload_file(current_user):
                     logger.error(f"Duplicate bill detected for user {current_user.id}: {str(ie)}")
                     return jsonify({'message': 'Duplicate bill not allowed. This bill already exists. Please upload a different bill.'}), 409
                 logger.info(f"Extracted data saved to DB for user {current_user.id}, bill id: {bill.id}")
+                # Upload the image to S3 with username_billid as key
+                user_obj = User.query.get(current_user.id)
+                s3_upload_success = DataExtractor.upload_image_to_s3(
+                    file_path,
+                    bucket_name=os.environ.get('S3_BUCKET_NAME', 'spendlytic'),
+                    user_id=user_obj.username + f'_{bill.id}',
+                    content_type=file.content_type,
+                    folder="uploads"
+                )
+                if s3_upload_success is None:
+                    logger.error(f"Failed to upload image to S3 for user {current_user.id}, bill id: {bill.id}")
+                    return jsonify({'message': 'Failed to upload image to S3.'}), 500
+                bill.s3_key = s3_upload_success
+                db.session.commit()
                 # Invalidate bills cache for this user
                 cache_key = f"user_bills_{current_user.id}"
                 current_app.redis_client.delete(cache_key)
@@ -141,3 +157,20 @@ def upload_file(current_user):
     except Exception as e:
         logger.error(f"Upload error for user {current_user.id}: {str(e)}")
         return jsonify({'message': 'Internal server error', 'error': str(e)}), 500 
+
+# New endpoint to get signed S3 URL for bill preview
+@upload_bp.route('/bill/<int:bill_id>/preview-url', methods=['GET'])
+@token_required
+@redis_cache(lambda current_user, bill_id: f"signed_url_{current_user.id}_{bill_id}", timeout=600)
+def get_bill_preview_url(current_user, bill_id):
+    bill = Bill.get_bill(bill_id)
+    if not bill or bill.user_id != current_user.id:
+        return {'message': 'Bill not found or unauthorized'}, 404
+    if not bill.s3_key:
+        return {'message': 'No image available for this bill'}, 404
+    bucket_name = os.environ.get('S3_BUCKET_NAME', 'spendlytic')
+    expiration = 600
+    signed_url = DataExtractor.generate_presigned_url(bucket_name, bill.s3_key, expiration=expiration)
+    if not signed_url:
+        return {'message': 'Failed to generate signed URL'}, 500
+    return {'signed_url': signed_url}, 200 

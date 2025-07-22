@@ -62,6 +62,7 @@ export const uploadReceipt = (file: File) => {
 export const fetchBills = () => API.get<{ bills: Bill[] }>('/bills');
 export const fetchBillItems = (billId: string) => API.get<{ items: BillItem[] }>(`/bills/${billId}/items`);
 export const deleteBill = (billId: number) => API.delete(`/bills/${billId}`);
+export const fetchBillPreviewUrl = (billId: number) => API.get<{ signed_url: string }>(`/bill/${billId}/preview-url`);
 export const getGoogleLoginUrl = () => `${API.defaults.baseURL}/auth/google/login`;
 
 export default API; 

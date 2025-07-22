@@ -60,8 +60,7 @@ def register():
         db.session.commit()
         logger.info(f"User registered successfully: {data['username']}")
         return jsonify({
-            'message': 'User registered successfully',
-            'user': new_user.to_dict()
+            'message': 'User registered successfully'
         }), 201
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
@@ -95,8 +94,7 @@ def login():
         logger.info(f"User logged in successfully: {data['username']}")
         return jsonify({
             'message': 'Login successful',
-            'token': token,
-            'user': user.to_dict()
+            'token': token
         }), 200
     except Exception as e:
         logger.error(f"Login error: {str(e)}")
